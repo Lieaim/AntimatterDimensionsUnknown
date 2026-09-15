@@ -142,7 +142,7 @@ dev.setCompanionGlyphEP = function(eternityPoints) {
   const glyph = player.reality.glyphs.active
     .concat(player.reality.glyphs.inventory)
     .filter(g => g.type === "companion")[0];
-  glyph.strength = rarityToStrength(eternityPoints.log10() / 1e6);
+  glyph.strength = rarityToStrength(eternityPoints.log10().toNumber() / 1e6);
 };
 
 dev.decriminalize = function() {
@@ -225,7 +225,7 @@ dev.buyAllPerks = function() {
 // This should help for balancing different glyph types, strong rounding of values is intentional
 dev.printResourceTotals = function() {
   console.log(`Antimatter: e${Currency.antimatter.exponent.toPrecision(3)}`);
-  console.log(`RM: e${Math.round(MachineHandler.gainedRealityMachines.log10())}`);
+  console.log(`RM: e${Math.round(MachineHandler.gainedRealityMachines.log10().toNumber())}`);
   console.log(`Glyph level: ${100 * Math.floor(gainedGlyphLevel().actualLevel / 100 + 0.5)}`);
 
   console.log(`Tickspeed: e${-Tickspeed.current.exponent.toPrecision(3)}`);
@@ -234,32 +234,32 @@ dev.printResourceTotals = function() {
   const rGalaxy = 100 * Math.floor(Replicanti.galaxies.total / 100 + 0.5);
   const dGalaxy = 100 * Math.floor(player.dilation.totalTachyonGalaxies / 100 + 0.5);
   console.log(`Galaxies: ${aGalaxy}+${rGalaxy}+${dGalaxy} (${aGalaxy + rGalaxy + dGalaxy})`);
-  console.log(`Tick reduction: e${-Math.round(getTickSpeedMultiplier().log10())}`);
+  console.log(`Tick reduction: e${-Math.round(getTickSpeedMultiplier().log10().toNumber())}`);
 
   let ADmults = DC.D1;
   for (let i = 1; i <= 8; i++) {
     ADmults = ADmults.times(AntimatterDimension(i).multiplier);
   }
-  console.log(`AD mults: e${ADmults.log10().toPrecision(3)}`);
+  console.log(`AD mults: e${ADmults.log10().toNumber().toPrecision(3)}`);
   let IDmults = DC.D1;
   for (let i = 1; i <= 8; i++) {
     IDmults = IDmults.times(InfinityDimension(i).multiplier);
   }
-  console.log(`ID mults: e${IDmults.log10().toPrecision(3)}`);
+  console.log(`ID mults: e${IDmults.log10().toNumber().toPrecision(3)}`);
   let TDmults = DC.D1;
   for (let i = 1; i <= 8; i++) {
     TDmults = TDmults.times(TimeDimension(i).multiplier);
   }
-  console.log(`TD mults: e${TDmults.log10().toPrecision(3)}`);
+  console.log(`TD mults: e${TDmults.log10().toNumber().toPrecision(3)}`);
   console.log(`Tickspeed from TD: ${formatWithCommas(1000 * Math.floor(player.totalTickGained / 1000 + 0.5))}`);
 
-  console.log(`Infinities: e${Math.round(player.infinities.log10())}`);
-  console.log(`Eternities: e${Math.round(player.eternities.log10())}`);
-  console.log(`Replicanti: e${formatWithCommas(1e5 * Math.floor(Replicanti.amount.log10() / 1e5 + 0.5))}`);
+  console.log(`Infinities: e${Math.round(player.infinities.log10().toNumber())}`);
+  console.log(`Eternities: e${Math.round(player.eternities.log10().toNumber())}`);
+  console.log(`Replicanti: e${formatWithCommas(1e5 * Math.floor(Replicanti.amount.log10().toNumber() / 1e5 + 0.5))}`);
 
-  console.log(`TT: e${Math.round(player.timestudy.theorem.log10())}`);
-  console.log(`DT: e${Math.round(player.dilation.dilatedTime.log10())}`);
-  console.log(`TP: e${Math.round(player.dilation.tachyonParticles.log10())}`);
+  console.log(`TT: e${Math.round(player.timestudy.theorem.log10().toNumber())}`);
+  console.log(`DT: e${Math.round(player.dilation.dilatedTime.log10().toNumber())}`);
+  console.log(`TP: e${Math.round(player.dilation.tachyonParticles.log10().toNumber())}`);
 };
 
 dev.unlockCelestialQuotes = function(celestial) {

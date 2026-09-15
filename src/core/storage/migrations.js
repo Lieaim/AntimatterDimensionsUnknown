@@ -554,7 +554,7 @@ export const migrations = {
       player.epmultUpgrades = 0;
       return;
     }
-    player.epmultUpgrades = mult.log(5);
+    player.epmultUpgrades = mult.log(5).toNumber();
   },
 
   moveChallengeInfo(player) {
@@ -868,7 +868,7 @@ export const migrations = {
           autobuyer.amount = condition;
           break;
         case "time":
-          autobuyer.time = condition.lt(Decimal.NUMBER_MAX_VALUE) ? condition.toNumber() : autobuyer.time;
+          autobuyer.time = condition.lt(Decimal.dNumberMax) ? condition.toNumber() : autobuyer.time;
           break;
         case "relative":
           autobuyer.xHighest = condition;
@@ -1125,7 +1125,7 @@ export const migrations = {
   convertTimeTheoremPurchases(player) {
     player.timestudy.amBought = new Decimal(player.timestudy.amcost).exponent / 20000 - 1;
     player.timestudy.ipBought = new Decimal(player.timestudy.ipcost).exponent / 100;
-    player.timestudy.epBought = Math.round(new Decimal(player.timestudy.epcost).log2());
+    player.timestudy.epBought = Math.round(new Decimal(player.timestudy.epcost).log2().toNumber());
 
     delete player.timestudy.amcost;
     delete player.timestudy.ipcost;
@@ -1161,7 +1161,7 @@ export const migrations = {
 
   refactorDoubleIPRebuyable(player) {
     // A bit of a hack, but needs to be done this way to not trigger the non-Decimal assignment crash check code
-    const purchases = new Decimal(player.infMult).log2();
+    const purchases = new Decimal(player.infMult).log2().toNumber();
     delete player.infMult;
     player.infMult = Math.round(purchases);
     delete player.infMultCost;

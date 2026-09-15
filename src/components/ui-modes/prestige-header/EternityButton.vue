@@ -60,7 +60,7 @@ export default {
         ],
         [0, 255, 0]
       ];
-      const ratio = this.gainedEP.log10() / this.currentEP.log10();
+      const ratio = this.gainedEP.log10().toNumber() / this.currentEP.log10().toNumber();
       const interFn = index => {
         if (ratio < 0.9) return stepRGB[0][index];
         if (ratio < 1) {

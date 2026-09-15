@@ -280,9 +280,9 @@ export const Pelle = {
   },
 
   get remnantsGain() {
-    let am = this.cel.records.totalAntimatter.plus(1).log10();
-    let ip = this.cel.records.totalInfinityPoints.plus(1).log10();
-    let ep = this.cel.records.totalEternityPoints.plus(1).log10();
+    let am = this.cel.records.totalAntimatter.plus(1).log10().toNumber();
+    let ip = this.cel.records.totalInfinityPoints.plus(1).log10().toNumber();
+    let ep = this.cel.records.totalEternityPoints.plus(1).log10().toNumber();
 
     if (PelleStrikes.dilation.hasStrike) {
       am *= 500;

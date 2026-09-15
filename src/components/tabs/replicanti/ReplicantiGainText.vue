@@ -20,7 +20,7 @@ export default {
         (Math.log(player.replicanti.chance + 1)), getReplicantiInterval(false)).dividedBy(Math.LN10);
 
       const replicantiAmount = Replicanti.amount;
-      const isAbove308 = Replicanti.isUncapped && replicantiAmount.log10() > LOG10_MAX_VALUE;
+      const isAbove308 = Replicanti.isUncapped && replicantiAmount.log10().toNumber() > LOG10_MAX_VALUE;
 
       if (isAbove308) {
         const postScale = Math.log10(ReplicantiGrowth.scaleFactor) / ReplicantiGrowth.scaleLog10;
@@ -31,7 +31,7 @@ export default {
         // The calculations to estimate time to next milestone of OoM based on game state, assumes that uncapped
         // replicanti growth scales as time^1/postScale, which turns out to be a reasonable approximation.
         const milestoneStep = Pelle.isDoomed ? 100 : 1000;
-        const nextMilestone = Decimal.pow10(milestoneStep * Math.floor(replicantiAmount.log10() / milestoneStep + 1));
+        const nextMilestone = Decimal.pow10(milestoneStep * Math.floor(replicantiAmount.log10().toNumber() / milestoneStep + 1));
         const coeff = Decimal.divide(updateRateMs / 1000, logGainFactorPerTick.times(postScale));
         const timeToThousand = coeff.times(nextMilestone.divide(replicantiAmount).pow(postScale).minus(1));
         // The calculation seems to choke and return zero if the time is too large, probably because of rounding issues
@@ -45,7 +45,7 @@ export default {
       }
 
       const totalTime = LOG10_MAX_VALUE / (ticksPerSecond * log10GainFactorPerTick.toNumber());
-      let remainingTime = (LOG10_MAX_VALUE - replicantiAmount.log10()) /
+      let remainingTime = (LOG10_MAX_VALUE - replicantiAmount.log10().toNumber()) /
         (ticksPerSecond * log10GainFactorPerTick.toNumber());
       if (remainingTime < 0) {
         // If the cap is raised via Effarig Infinity but the player doesn't have TS192, this will be a negative number
@@ -114,7 +114,7 @@ export default {
           let pendingTime = pending * secondsPerGalaxy.toNumber();
           // If popular music is unlocked add the divide amount
           if (Achievement(126).isUnlocked && !Pelle.isDoomed) {
-            const leftPercentAfterGalaxy = replicantiAmount.log10() / LOG10_MAX_VALUE - pending;
+            const leftPercentAfterGalaxy = replicantiAmount.log10().toNumber() / LOG10_MAX_VALUE - pending;
             pendingTime += leftPercentAfterGalaxy * secondsPerGalaxy.toNumber();
           }
           const thisGalaxyTime = pending > 0 ? pendingTime : secondsPerGalaxy.toNumber() - remainingTime;

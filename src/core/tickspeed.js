@@ -15,7 +15,7 @@ export function effectiveBaseGalaxies() {
   // this value should not be contributed to total replicanti galaxies
   replicantiGalaxies += nonActivePathReplicantiGalaxies * Effects.sum(EternityChallenge(8).reward);
   let freeGalaxies = player.dilation.totalTachyonGalaxies;
-  freeGalaxies *= 1 + Math.max(0, Replicanti.amount.log10() / 1e6) * AlchemyResource.alternation.effectValue;
+  freeGalaxies *= 1 + Math.max(0, Replicanti.amount.log10().toNumber() / 1e6) * AlchemyResource.alternation.effectValue;
   return Math.max(player.galaxies + GalaxyGenerator.galaxies + replicantiGalaxies + freeGalaxies, 0);
 }
 
@@ -129,7 +129,7 @@ export const Tickspeed = {
     return this.isUnlocked &&
       !EternityChallenge(9).isRunning &&
       !Laitela.continuumActive &&
-      (player.break || this.cost.lt(Decimal.NUMBER_MAX_VALUE));
+      (player.break || this.cost.lt(Decimal.dNumberMax));
   },
 
   get isAffordable() {
@@ -216,7 +216,7 @@ export const FreeTickspeed = {
     const tickmult = (1 + (Effects.min(1.33, TimeStudy(171)) - 1) *
       Math.max(getAdjustedGlyphEffect("cursedtickspeed"), 1));
     const logTickmult = Math.log(tickmult);
-    const logShards = shards.ln();
+    const logShards = shards.ln().toNumber();
     const uncapped = Math.max(0, logShards / logTickmult);
     if (uncapped <= FreeTickspeed.softcap) {
       this.multToNext = tickmult;

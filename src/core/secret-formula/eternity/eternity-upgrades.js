@@ -21,7 +21,7 @@ export const eternityUpgrades = {
       const multPreCap = Math.pow(base, pow);
       const eterPostCap = Currency.eternities.value.sub(1e5);
       const mult1 = eterPostCap.divide(200).plus(1);
-      const mult2 = eterPostCap.times(2).plus(1).log(Math.E) / log4;
+      const mult2 = eterPostCap.times(2).plus(1).log(Math.E).toNumber() / log4;
       const multPostCap = mult1.times(mult2).clampMin(1);
       return multPostCap.times(multPreCap);
     },

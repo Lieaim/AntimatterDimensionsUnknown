@@ -92,7 +92,7 @@ export const Effarig = {
         c = 25;
         break;
     }
-    return 3 * (1 - c / (c + Math.sqrt(power.pLog10())));
+    return 3 * (1 - c / (c + Math.sqrt(power.pLog10().toNumber())));
   },
   get tickDilation() {
     return 0.7 + 0.1 * this.nerfFactor(Currency.timeShards.value);
@@ -101,16 +101,16 @@ export const Effarig = {
     return 0.25 + 0.25 * this.nerfFactor(Currency.infinityPower.value);
   },
   get tickspeed() {
-    const base = 3 + Tickspeed.baseValue.reciprocal().log10();
+    const base = 3 + Tickspeed.baseValue.reciprocal().log10().toNumber();
     return Decimal.pow10(Math.pow(base, this.tickDilation)).reciprocal();
   },
   multiplier(mult) {
-    const base = new Decimal(mult).pLog10();
+    const base = new Decimal(mult).pLog10().toNumber();
     return Decimal.pow10(Math.pow(base, this.multDilation));
   },
   get bonusRG() {
     // Will return 0 if Effarig Infinity is uncompleted
-    return Math.floor(replicantiCap().pLog10() / LOG10_MAX_VALUE - 1);
+    return Math.floor(replicantiCap().pLog10().toNumber() / LOG10_MAX_VALUE - 1);
   },
   quotes: Quotes.effarig,
   symbol: "Ϙ"

@@ -22,7 +22,7 @@ export const EP = {
     isBase: true,
     fakeValue: DC.D5,
     multValue: () => DC.D5.pow(player.records.thisEternity.maxIP.plus(
-      gainedInfinityPoints()).log10() / (308 - PelleRifts.recursion.effectValue.toNumber()) - 0.7),
+      gainedInfinityPoints()).log10().toNumber() / (308 - PelleRifts.recursion.effectValue.toNumber()) - 0.7),
     isActive: () => PlayerProgress.eternityUnlocked(),
     icon: MultiplierTabIcons.CONVERT_FROM("IP"),
   },

@@ -216,7 +216,7 @@ export const realityUpgrades = [
     canLock: true,
     lockEvent: () => `purchase a ${formatX(5)} EP upgrade`,
     description: () => `Boost Tachyon Particle gain based on ${formatX(5)} Eternity Point multiplier`,
-    effect: () => Math.max(Math.sqrt(Decimal.log10(EternityUpgrade.epMult.effectValue)) / 9, 1),
+    effect: () => Math.max(Math.sqrt(Decimal.log10(EternityUpgrade.epMult.effectValue).toNumber()) / 9, 1),
     formatEffect: value => formatX(value, 2, 2)
   },
   {
@@ -271,7 +271,7 @@ export const realityUpgrades = [
     checkRequirement: () => Glyphs.activeWithoutCompanion.countWhere(g => g.level >= 10) === 4,
     checkEvent: GAME_EVENT.REALITY_RESET_BEFORE,
     description: "Eternity count boosts Glyph level",
-    effect: () => Math.max(Math.sqrt(Currency.eternities.value.plus(1).log10()) * 0.45, 1),
+    effect: () => Math.max(Math.sqrt(Currency.eternities.value.plus(1).log10().toNumber()) * 0.45, 1),
     formatCost: value => format(value, 1, 0)
   },
   {

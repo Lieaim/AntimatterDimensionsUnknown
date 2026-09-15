@@ -108,7 +108,7 @@ export const imaginaryUpgrades = [
     checkRequirement: () => player.celestials.effarig.relicShards >= 1e90,
     checkEvent: GAME_EVENT.REALITY_RESET_AFTER,
     description: "Time Dimension power based on total antimatter",
-    effect: () => 1 + Math.log10(player.records.totalAntimatter.log10()) / 100,
+    effect: () => 1 + Math.log10(player.records.totalAntimatter.log10().toNumber()) / 100,
     formatEffect: value => `${formatPow(value, 0, 4)}`,
     isDisabledInDoomed: true
   },
@@ -244,7 +244,7 @@ export const imaginaryUpgrades = [
     requirement: () => `Reach ${format("1e7400000000000")} antimatter with Continuum disabled for the entire Reality`,
     hasFailed: () => !player.requirementChecks.reality.noContinuum,
     checkRequirement: () => player.requirementChecks.reality.noContinuum &&
-      Currency.antimatter.value.log10() >= 7.4e12,
+      Currency.antimatter.value.log10().toNumber() >= 7.4e12,
     checkEvent: GAME_EVENT.GAME_TICK_AFTER,
     canLock: true,
     lockEvent: "enable Continuum",

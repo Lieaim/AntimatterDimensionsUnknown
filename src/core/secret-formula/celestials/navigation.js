@@ -227,7 +227,7 @@ export const celestialNavigation = {
   "teresa-reality-unlock": {
     visible: () => true,
     complete: () => (TeresaUnlocks.run.canBeApplied
-      ? 1 : Decimal.pLog10(Teresa.pouredAmount) / Math.log10(TeresaUnlocks.run.price)),
+      ? 1 : Decimal.pLog10(Teresa.pouredAmount).toNumber() / Math.log10(TeresaUnlocks.run.price)),
     node: {
       completeClass: "c-celestial-nav__test-complete",
       incompleteClass: "c-celestial-nav__test-incomplete",
@@ -287,7 +287,7 @@ export const celestialNavigation = {
   "teresa-pp-shop": {
     visible: () => true,
     complete: () => (TeresaUnlocks.shop.canBeApplied
-      ? 1 : Decimal.pLog10(Teresa.pouredAmount) / Math.log10(TeresaUnlocks.shop.price)),
+      ? 1 : Decimal.pLog10(Teresa.pouredAmount).toNumber() / Math.log10(TeresaUnlocks.shop.price)),
     node: {
       clickAction: () => Tab.celestials.teresa.show(true),
       completeClass: "c-celestial-nav__test-complete",
@@ -323,7 +323,7 @@ export const celestialNavigation = {
   "effarig-shop": {
     visible: () => true,
     complete: () => (TeresaUnlocks.effarig.canBeApplied
-      ? 1 : Decimal.pLog10(Teresa.pouredAmount) / Math.log10(TeresaUnlocks.effarig.price)),
+      ? 1 : Decimal.pLog10(Teresa.pouredAmount).toNumber() / Math.log10(TeresaUnlocks.effarig.price)),
     node: {
       clickAction: () => Tab.celestials.effarig.show(true),
       completeClass: "c-celestial-nav__effarig",
@@ -359,7 +359,7 @@ export const celestialNavigation = {
     // If the upgrade to unlock the reality isn't yet bought, clamp the progress at 99.9%,
     // even if the player has enough relic shards to buy it.
     complete: () => (EffarigUnlock.run.isUnlocked
-      ? 1 : Math.clampMax(0.999, Decimal.pLog10(Currency.relicShards.value) /
+      ? 1 : Math.clampMax(0.999, Decimal.pLog10(Currency.relicShards.value).toNumber() /
         Math.log10(EffarigUnlock.run.cost))),
     node: {
       clickAction: () => Tab.celestials.effarig.show(true),
@@ -397,7 +397,7 @@ export const celestialNavigation = {
       if (EffarigUnlock.infinity.isUnlocked) return 1;
       if (!Effarig.isRunning) return 0;
 
-      return Currency.antimatter.value.pLog10() / Decimal.NUMBER_MAX_VALUE.log10();
+      return Currency.antimatter.value.pLog10().toNumber() / Decimal.dNumberMax.log10().toNumber();
     },
     node: {
       clickAction: () => Tab.celestials.effarig.show(true),
@@ -438,7 +438,7 @@ export const celestialNavigation = {
       if (EffarigUnlock.eternity.isUnlocked) return 1;
       if (!Effarig.isRunning) return 0;
 
-      return Currency.infinityPoints.value.pLog10() / Decimal.NUMBER_MAX_VALUE.log10();
+      return Currency.infinityPoints.value.pLog10().toNumber() / Decimal.dNumberMax.log10().toNumber();
     },
     node: {
       clickAction: () => Tab.celestials.effarig.show(true),
@@ -487,7 +487,7 @@ export const celestialNavigation = {
       if (EffarigUnlock.reality.isUnlocked) return 1;
       if (!Effarig.isRunning) return 0;
 
-      return Currency.eternityPoints.value.pLog10() / 4000;
+      return Currency.eternityPoints.value.pLog10().toNumber() / 4000;
     },
     node: {
       clickAction: () => Tab.celestials.effarig.show(true),
@@ -654,7 +654,7 @@ export const celestialNavigation = {
       if (Enslaved.isCompleted) return 1;
       if (!Enslaved.isRunning) return 0;
 
-      return Currency.eternityPoints.value.pLog10() / 4000;
+      return Currency.eternityPoints.value.pLog10().toNumber() / 4000;
     },
     node: {
       clickAction: () => Tab.celestials.enslaved.show(true),
@@ -1430,7 +1430,7 @@ export const celestialNavigation = {
         if (player.requirementChecks.reality.maxID1.neq(0)) return 0.5;
         return 0.5 + 0.5 * Math.clampMax(0.999, player.antimatter.exponent / 1.5e12);
       }
-      return Math.clampMax(0.5, Currency.realityMachines.value.pLog10() / MachineHandler.baseRMCap.exponent);
+      return Math.clampMax(0.5, Currency.realityMachines.value.pLog10().toNumber() / MachineHandler.baseRMCap.exponent);
     },
     drawOrder: -1,
     node: {
@@ -1808,7 +1808,7 @@ export const celestialNavigation = {
     complete: () => {
       if (Pelle.isUnlocked) return 1;
       const imCost = Math.clampMax(emphasizeEnd(Math.log10(Currency.imaginaryMachines.value) / Math.log10(1.6e15)), 1);
-      let laitelaProgress = Laitela.isRunning ? Math.min(Currency.eternityPoints.value.log10() / 4000, 0.99) : 0;
+      let laitelaProgress = Laitela.isRunning ? Math.min(Currency.eternityPoints.value.log10().toNumber() / 4000, 0.99) : 0;
       if (Laitela.difficultyTier !== 8 || Glyphs.activeWithoutCompanion.length > 1) laitelaProgress = 0;
       else if (ImaginaryUpgrade(25).isAvailableForPurchase) laitelaProgress = 1;
       return (imCost + laitelaProgress) / 2;

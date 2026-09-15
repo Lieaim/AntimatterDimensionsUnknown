@@ -45,7 +45,7 @@ export const Laitela = {
     }
   },
   get matterExtraPurchaseFactor() {
-    return (1 + 0.5 * Math.pow(Decimal.pLog10(Currency.darkMatter.max) / 50, 0.4) *
+    return (1 + 0.5 * Math.pow(Decimal.pLog10(Currency.darkMatter.max).toNumber() / 50, 0.4) *
       (1 + SingularityMilestone.continuumMult.effectOrDefault(0)));
   },
   get realityReward() {
@@ -54,11 +54,11 @@ export const Laitela = {
   },
   // Note that entropy goes from 0 to 1, with 1 being completion
   get entropyGainPerSecond() {
-    return Math.clamp(Math.pow(Currency.antimatter.value.add(1).log10() / 1e11, 2), 0, 100) / 200;
+    return Math.clamp(Math.pow(Currency.antimatter.value.add(1).log10().toNumber() / 1e11, 2), 0, 100) / 200;
   },
   get darkMatterMultGain() {
     return Decimal.pow(Currency.darkMatter.value.dividedBy(this.annihilationDMRequirement)
-      .plus(1).log10(), 1.5).toNumber() * ImaginaryUpgrade(21).effectOrDefault(1);
+      .plus(1).log10().toNumber(), 1.5).toNumber() * ImaginaryUpgrade(21).effectOrDefault(1);
   },
   get darkMatterMult() {
     return this.celestial.darkMatterMult;
@@ -102,11 +102,11 @@ export const Laitela = {
     // Buy everything costing less than 0.02 of initial matter.
     const darkMatter = Currency.darkMatter.value;
     for (const upgrade of upgradeInfo) {
-      const purchases = Math.clamp(Math.floor(darkMatter.times(0.02).div(upgrade[0]).log(upgrade[1])), 0, upgrade[2]);
+      const purchases = Math.clamp(Math.floor(darkMatter.times(0.02).div(upgrade[0]).log(upgrade[1]).toNumber()), 0, upgrade[2]);
       buy(upgrade, purchases);
     }
     while (upgradeInfo.some(upgrade => upgrade[0].lte(darkMatter) && upgrade[2] > 0)) {
-      const cheapestUpgrade = upgradeInfo.filter(upgrade => upgrade[2] > 0).sort((a, b) => a[0].minus(b[0]).sign())[0];
+      const cheapestUpgrade = upgradeInfo.filter(upgrade => upgrade[2] > 0).sort((a, b) => a[0].minus(b[0]).sgn())[0];
       buy(cheapestUpgrade, 1);
     }
   },

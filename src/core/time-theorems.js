@@ -35,7 +35,7 @@ export class TimeTheoremPurchaseType {
 
   get bulkPossible() {
     if (Perk.ttFree.canBeApplied) {
-      return Math.floor(this.currency.value.divide(this.cost).log10() / this.costIncrement.log10() + 1);
+      return Math.floor(this.currency.value.divide(this.cost).log10().toNumber() / this.costIncrement.log10().toNumber() + 1);
     }
     return Decimal.affordGeometricSeries(this.currency.value, this.cost, this.costIncrement, 0).toNumber();
   }

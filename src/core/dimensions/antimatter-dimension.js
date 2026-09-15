@@ -512,7 +512,7 @@ class AntimatterDimensionState extends DimensionState {
     */
   get isAffordable() {
     if (Laitela.continuumActive) return false;
-    if (!player.break && this.cost.gt(Decimal.NUMBER_MAX_VALUE)) return false;
+    if (!player.break && this.cost.gt(Decimal.dNumberMax)) return false;
     return this.cost.lte(this.currencyAmount);
   }
 
@@ -520,7 +520,7 @@ class AntimatterDimensionState extends DimensionState {
    * @returns {boolean}
    */
   get isAffordableUntil10() {
-    if (!player.break && this.cost.gt(Decimal.NUMBER_MAX_VALUE)) return false;
+    if (!player.break && this.cost.gt(Decimal.dNumberMax)) return false;
     return this.costUntil10.lte(this.currencyAmount);
   }
 
@@ -573,7 +573,7 @@ class AntimatterDimensionState extends DimensionState {
     const postBreak = (player.break && !NormalChallenge.isRunning) ||
       InfinityChallenge.isRunning ||
       Enslaved.isRunning;
-    return postBreak ? Decimal.MAX_VALUE : DC.E315;
+    return postBreak ? Decimal.dInf : DC.E315;
   }
 
   get productionPerSecond() {
@@ -594,7 +594,7 @@ class AntimatterDimensionState extends DimensionState {
         production = production.times(player.chall3Pow);
       }
       if (production.gt(10)) {
-        const log10 = production.log10();
+        const log10 = production.log10().toNumber();
         production = Decimal.pow10(Math.pow(log10, getAdjustedGlyphEffect("effarigantimatter")));
       }
     }

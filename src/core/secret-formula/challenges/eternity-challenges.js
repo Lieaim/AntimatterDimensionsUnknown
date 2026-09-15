@@ -122,7 +122,7 @@ export const eternityChallenges = [
     reward: {
       description: "Infinity Power strengthens Replicanti Galaxies",
       effect: completions => {
-        const infinityPower = Math.log10(Currency.infinityPower.value.pLog10() + 1);
+        const infinityPower = Math.log10(Currency.infinityPower.value.pLog10().toNumber() + 1);
         return Math.max(0, Math.pow(infinityPower, 0.03 * completions) - 1);
       },
       formatEffect: value => formatPercents(value, 2)

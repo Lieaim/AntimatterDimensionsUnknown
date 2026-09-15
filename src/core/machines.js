@@ -17,7 +17,7 @@ export const MachineHandler = {
   },
 
   get uncappedRM() {
-    let log10FinalEP = player.records.thisReality.maxEP.plus(gainedEternityPoints()).log10();
+    let log10FinalEP = player.records.thisReality.maxEP.plus(gainedEternityPoints()).log10().toNumber();
     if (!PlayerProgress.realityUnlocked()) {
       if (log10FinalEP > 8000) log10FinalEP = 8000;
       if (log10FinalEP > 6000) log10FinalEP -= (log10FinalEP - 6000) * 0.75;
@@ -38,8 +38,8 @@ export const MachineHandler = {
   },
 
   get baseIMCap() {
-    return (Math.pow(Math.clampMin(this.uncappedRM.log10() - 1000, 0), 2)) *
-      (Math.pow(Math.clampMin(this.uncappedRM.log10() - 100000, 1), 0.2));
+    return (Math.pow(Math.clampMin(this.uncappedRM.log10().toNumber() - 1000, 0), 2)) *
+      (Math.pow(Math.clampMin(this.uncappedRM.log10().toNumber() - 100000, 1), 0.2));
   },
 
   get currentIMCap() {

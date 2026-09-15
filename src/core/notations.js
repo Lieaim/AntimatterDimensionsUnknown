@@ -1,4 +1,4 @@
-import * as ADNotations from "@antimatter-dimensions/notations";
+import * as ADNotations from "adnot-beport-small";
 
 export const Notation = (function() {
   const N = ADNotations;
@@ -81,7 +81,7 @@ export const Notations = {
   }
 };
 
-ADNotations.Settings.isInfinite = decimal => ui.formatPreBreak && decimal.gte(Decimal.NUMBER_MAX_VALUE);
+ADNotations.Settings.isInfinite = decimal => ui.formatPreBreak && decimal.gte(Decimal.dNumberMax);
 
 EventHub.logic.on(GAME_EVENT.GAME_TICK_AFTER, () => {
   ui.formatPreBreak = !PlayerProgress.hasBroken() || (NormalChallenge.isRunning && !Enslaved.isRunning);

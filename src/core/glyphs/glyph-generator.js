@@ -178,7 +178,7 @@ export const GlyphGenerator = {
 
   companionGlyph(eternityPoints) {
     // Store the pre-Reality EP value in the glyph's rarity
-    const str = rarityToStrength(eternityPoints.log10() / 1e6);
+    const str = rarityToStrength(eternityPoints.log10().toNumber() / 1e6);
     const effects = orderedEffectList.filter(effect => effect.match("companion*"));
     const effectBitmask = makeGlyphEffectBitmask(effects);
     return {

@@ -99,13 +99,13 @@ export default {
             </div>
             <div class="l-remnant-factors-col">
               <div class="l-remnant-factors-item">
-                {{ format(Math.log10(best.am.add(1).log10()*dilationMult[0] + 2), 2, 2) }}
+                {{ format(Math.log10(best.am.add(1).log10().toNumber()*dilationMult[0] + 2), 2, 2) }}
               </div>
               <div class="l-remnant-factors-item">
-                {{ format(Math.log10(best.ip.add(1).log10()*dilationMult[1] + 2), 2, 2) }}
+                {{ format(Math.log10(best.ip.add(1).log10().toNumber()*dilationMult[1] + 2), 2, 2) }}
               </div>
               <div class="l-remnant-factors-item">
-                {{ format(Math.log10(best.ep.add(1).log10()*dilationMult[2] + 2), 2, 2) }}
+                {{ format(Math.log10(best.ep.add(1).log10().toNumber()*dilationMult[2] + 2), 2, 2) }}
               </div>
               <div class="l-remnant-factors-item">
                 {{ format(1.64, 2, 2) }}
