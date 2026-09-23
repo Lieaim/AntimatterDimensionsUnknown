@@ -6,10 +6,13 @@ env:
 on:
   push:
     branches:
-      - master
+      - main
   workflow_dispatch:
     branches:
-      - master
+      - main
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -30,4 +33,3 @@ jobs:
           branch: gh-pages
           folder: dist
           single-commit: true
-
