@@ -82,10 +82,7 @@ export default {
         const adjusted = Decimal.divide(rm, MachineHandler.realityMachineMultiplier);
         if (adjusted.lte(1)) return Decimal.pow10(4000);
         if (adjusted.lte(10)) return Decimal.pow10(4000 / 27 * (adjusted.toNumber() + 26));
-        let result = Decimal.pow10(4000 * (adjusted.log10().toNumber() / 3 + 1));
-        if (!PlayerProgress.realityUnlocked() && result.gte("1e6000")) {
-          result = result.div("1e6000").pow(4).times("1e6000");
-        }
+        const result = Decimal.pow10(4000 * (adjusted.log10().toNumber() / 3 + 1));
         return result;
       }
 
@@ -98,7 +95,7 @@ export default {
       this.glyphLevel = gainedGlyphLevel().actualLevel;
       this.nextGlyphPercent = this.percentToNextGlyphLevelText();
       this.nextMachineEP = EPforRM(this.machinesGained.plus(1));
-      this.ppGained = multiplier;
+      this.ppGained = multiplier * Annihilation.perkPointMultiplier;
       this.shardsGained = Effarig.shardsGained * multiplier;
       this.currentShardsRate = (this.shardsGained / Time.thisRealityRealTime.totalMinutes);
       this.bestShardRate = player.records.thisReality.bestRSmin * multiplier;

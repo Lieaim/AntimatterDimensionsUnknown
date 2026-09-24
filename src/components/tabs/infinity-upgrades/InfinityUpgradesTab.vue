@@ -21,7 +21,8 @@ export default {
       ipMultHardCap: 0,
       eternityUnlocked: false,
       bottomRowUnlocked: false,
-      styleOfColumnBg: undefined
+      styleOfColumnBg: undefined,
+      annihilatedColumns: [],
     };
   },
   computed: {
@@ -87,6 +88,7 @@ export default {
       this.ipMultHardCap = GameDatabase.infinity.upgrades.ipMult.costCap;
       this.eternityUnlocked = PlayerProgress.current.isEternityUnlocked;
       this.bottomRowUnlocked = Achievement(41).isUnlocked;
+      this.annihilatedColumns = [...player.annihilation.infinityColumns];
     },
     btnClassObject(column) {
       const classObject = {
@@ -143,22 +145,24 @@ export default {
     Within each column, the upgrades must be purchased from top to bottom.
     <br>
     <div class="l-infinity-upgrade-grid l-infinity-upgrades-tab__grid">
-      <div
-        v-for="(column, columnId) in grid"
-        :key="columnId"
-        class="c-infinity-upgrade-grid__column"
-      >
-        <InfinityUpgradeButton
-          v-for="upgrade in column"
-          :key="upgrade.id"
-          :upgrade="upgrade"
-          :class="btnClassObject(columnId)"
-        />
+      <template v-for="(column, columnId) in grid">
         <div
-          class="c-infinity-upgrade-grid__column--background"
-          :style="styleOfColumnBg[columnId]"
-        />
-      </div>
+          v-if="!annihilatedColumns[columnId]"
+          :key="columnId"
+          class="c-infinity-upgrade-grid__column"
+        >
+          <InfinityUpgradeButton
+            v-for="upgrade in column"
+            :key="upgrade.id"
+            :upgrade="upgrade"
+            :class="btnClassObject(columnId)"
+          />
+          <div
+            class="c-infinity-upgrade-grid__column--background"
+            :style="styleOfColumnBg[columnId]"
+          />
+        </div>
+      </template>
     </div>
     <div
       v-if="bottomRowUnlocked"

@@ -32,6 +32,7 @@ export default {
       isAutobuyerOn: false,
       canBeLocked: false,
       hasRequirementLock: false,
+      hasAnnihilated: false,
     };
   },
   computed: {
@@ -76,6 +77,7 @@ export default {
       this.isAutoUnlocked = Ra.unlocks.instantECAndRealityUpgradeAutobuyers.canBeApplied;
       this.canBeLocked = upgrade.config.canLock && !this.isAvailableForPurchase;
       this.hasRequirementLock = upgrade.hasPlayerLock;
+      this.hasAnnihilated = Annihilation.hasAnnihilated;
       if (this.isRebuyable) this.isAutobuyerOn = Autobuyer.realityUpgrade(upgrade.id).isActive;
     },
     toggleLock(upgrade) {
@@ -102,7 +104,7 @@ export default {
       </HintText>
       <span :class="{ 'o-pelle-disabled': isUseless }">
         <DescriptionDisplay :config="config" />
-        <template v-if="($viewModel.shiftDown === isAvailableForPurchase) && !isRebuyable">
+        <template v-if="!hasAnnihilated && ($viewModel.shiftDown === isAvailableForPurchase) && !isRebuyable">
           <br>
           <DescriptionDisplay
             :config="requirementConfig"

@@ -21,12 +21,13 @@ export default {
     modalClass() {
       return {
         "l-modal-celestial-quote": true,
+        "l-modal-celestial-quote--annihilation": this.celestials.some(celestial => celestial[0] === "annihilation"),
       };
     },
   },
   methods: {
     styleObject(celEntry, opac, isText) {
-      const baseCol = `var(--color-${celEntry[0]}--base)`;
+      const baseCol = celEntry[0] === "annihilation" ? "#9e9e9e" : `var(--color-${celEntry[0]}--base)`;
       if (celEntry[0] === "laitela") {
         return {
           color: `var(--color-${celEntry[0]}--accent)`,
@@ -85,6 +86,14 @@ export default {
   border-radius: var(--var-border-radius, 1rem);
   transform: translate(-50%, -50%);
   background-color: black;
+}
+
+.l-modal-celestial-quote--annihilation {
+  background-image: linear-gradient(rgb(0 0 0 / 75%), rgb(0 0 0 / 75%)),
+    url("../../../../public/images/annihilation-high-god-symbol.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 16rem;
 }
 
 .c-modal-celestial-quote {

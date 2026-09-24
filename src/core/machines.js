@@ -13,15 +13,11 @@ export const MachineHandler = {
 
   get realityMachineMultiplier() {
     return ShopPurchase.RMPurchases.currentMult * Teresa.rmMultiplier * Effects.max(1, PerkShopUpgrade.rmMult) *
-      getAdjustedGlyphEffect("effarigrm") * Achievement(167).effectOrDefault(1);
+      getAdjustedGlyphEffect("effarigrm") * Achievement(167).effectOrDefault(1) * Annihilation.realityMachineMultiplier;
   },
 
   get uncappedRM() {
-    let log10FinalEP = player.records.thisReality.maxEP.plus(gainedEternityPoints()).log10().toNumber();
-    if (!PlayerProgress.realityUnlocked()) {
-      if (log10FinalEP > 8000) log10FinalEP = 8000;
-      if (log10FinalEP > 6000) log10FinalEP -= (log10FinalEP - 6000) * 0.75;
-    }
+    const log10FinalEP = player.records.thisReality.maxEP.plus(gainedEternityPoints()).log10().toNumber();
     let rmGain = DC.E3.pow(log10FinalEP / 4000 - 1);
     // Increase base RM gain if <10 RM
     if (rmGain.gte(1) && rmGain.lt(10)) rmGain = new Decimal(27 / 4000 * log10FinalEP - 26);
@@ -38,12 +34,15 @@ export const MachineHandler = {
   },
 
   get baseIMCap() {
-    return (Math.pow(Math.clampMin(this.uncappedRM.log10().toNumber() - 1000, 0), 2)) *
-      (Math.pow(Math.clampMin(this.uncappedRM.log10().toNumber() - 100000, 1), 0.2));
+    const logRM = this.uncappedRM.log10().toNumber();
+    const cap = Math.pow(Math.clampMin(logRM - 1000, 0), 2) *
+      Math.pow(Math.clampMin(logRM - 100000, 1), 0.2);
+    return Number.isFinite(cap) ? Math.min(cap, Number.MAX_VALUE) : Number.MAX_VALUE;
   },
 
   get currentIMCap() {
-    return player.reality.iMCap * ImaginaryUpgrade(13).effectOrDefault(1);
+    const cap = player.reality.iMCap * ImaginaryUpgrade(13).effectOrDefault(1);
+    return Number.isFinite(cap) ? Math.max(cap, 0) : Number.MAX_VALUE;
   },
 
   // This is iM cap based on in-game values at that instant, may be lower than the actual cap
@@ -67,8 +66,13 @@ export const MachineHandler = {
   },
 
   gainedImaginaryMachines(diff) {
-    return (this.currentIMCap - Currency.imaginaryMachines.value) *
-      (1 - Math.pow(2, (-diff / 1000 / this.scaleTimeForIM)));
+    const cap = this.currentIMCap;
+    const current = Number.isFinite(Currency.imaginaryMachines.value)
+      ? Math.clamp(Currency.imaginaryMachines.value, 0, cap)
+      : cap;
+    const gain = (cap - current) * (1 - Math.pow(2, (-diff / 1000 / this.scaleTimeForIM))) *
+      Annihilation.imaginaryMachineMultiplier;
+    return Number.isFinite(gain) ? Math.clamp(gain, 0, cap - current) : 0;
   },
 
   estimateIMTimer(cost) {

@@ -44,6 +44,27 @@ export default {
       return this.achievement.config;
     },
     styleObject() {
+      if (this.id === 191) {
+        return {
+          "background-image": "url('/images/achievement-ultimate-destruction.png')",
+          "background-position": "center",
+          "background-size": "cover"
+        };
+      }
+      if (this.id === 192) {
+        return {
+          "background-image": "url('/images/achievement-how-am-i-supposed-to-make-antimatter-now.png')",
+          "background-position": "center",
+          "background-size": "cover"
+        };
+      }
+      if (this.id === 193) {
+        return {
+          "background-image": "url('/images/achievement-infinity-go-bye-bye.png')",
+          "background-position": "center",
+          "background-size": "cover"
+        };
+      }
       return {
         "background-position": `-${(this.achievement.column - 1) * 104}px -${(this.achievement.row - 1) * 104}px`
       };
@@ -180,6 +201,13 @@ export default {
     @mouseenter="onMouseEnter"
     @mouseleave="onMouseLeave"
   >
+    <div
+      v-if="id === 191 || id === 192"
+      class="o-achievement__custom-title"
+      :class="{ 'o-achievement__custom-title--long': id === 192 }"
+    >
+      {{ config.name }}
+    </div>
     <HintText
       :key="garbleKey"
       type="achievements"
@@ -238,6 +266,23 @@ export default {
 .o-achievement-time {
   font-weight: bold;
   color: var(--color-accent);
+}
+
+.o-achievement__custom-title {
+  width: 100%;
+  position: absolute;
+  top: 0.4rem;
+  left: 0;
+  z-index: 1;
+  font-size: 0.95rem;
+  font-weight: bold;
+  line-height: 1.1;
+  color: white;
+  text-shadow: 0 0 0.25rem #000, 0.1rem 0.1rem 0.2rem #000;
+}
+
+.o-achievement__custom-title--long {
+  font-size: 0.72rem;
 }
 
 .o-achievement--disabled {

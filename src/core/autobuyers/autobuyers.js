@@ -144,6 +144,7 @@ export const Autobuyers = (function() {
     },
 
     reset() {
+      if (Annihilation.hasAnnihilated) return;
       for (const autobuyer of Autobuyers.all) {
         autobuyer.reset();
       }

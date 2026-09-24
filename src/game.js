@@ -16,6 +16,17 @@ if (GlobalErrorHandler.handled) {
 }
 GlobalErrorHandler.cleanStart = true;
 
+const BASE_PRESTIGE_POINT_MULTIPLIER = DC.D5;
+const BASE_PRESTIGE_POINT_POWER = 1.25;
+
+function applyBasePrestigePointBoost(points) {
+  // The free base IP/EP boost is disabled in a Doomed Reality. Annihilation-specific
+  // modifiers are applied separately after this function and remain active there.
+  return Pelle.isDoomed
+    ? points
+    : points.times(BASE_PRESTIGE_POINT_MULTIPLIER).pow(BASE_PRESTIGE_POINT_POWER);
+}
+
 export function playerInfinityUpgradesOnReset() {
 
   const infinityUpgrades = new Set(
@@ -41,6 +52,7 @@ export function playerInfinityUpgradesOnReset() {
 
   if (PelleUpgrade.keepBreakInfinityUpgrades.canBeApplied) {
     player.infinityUpgrades = new Set([...player.infinityUpgrades].filter(u => breakInfinityUpgrades.has(u)));
+    Annihilation.restoreInfinityUpgrades();
     return;
   }
 
@@ -49,6 +61,7 @@ export function playerInfinityUpgradesOnReset() {
     player.infinityRebuyables = [0, 0, 0];
     GameCache.tickSpeedMultDecrease.invalidate();
     GameCache.dimensionMultDecrease.invalidate();
+    Annihilation.restoreInfinityUpgrades();
     return;
   }
 
@@ -70,6 +83,7 @@ export function playerInfinityUpgradesOnReset() {
 
   GameCache.tickSpeedMultDecrease.invalidate();
   GameCache.dimensionMultDecrease.invalidate();
+  Annihilation.restoreInfinityUpgrades();
 }
 
 export function breakInfinity() {
@@ -80,7 +94,7 @@ export function breakInfinity() {
   }
   // There's a potential migration edge case involving already-maxed autobuyers; this should give the achievement
   Achievement(61).tryUnlock();
-  player.break = !player.break;
+  player.break = Annihilation.hasAnnihilated ? true : !player.break;
   TabNotification.ICUnlock.tryTrigger();
   EventHub.dispatch(player.break ? GAME_EVENT.BREAK_INFINITY : GAME_EVENT.FIX_INFINITY);
   GameUI.update();
@@ -93,10 +107,10 @@ export function gainedInfinityPoints() {
     TimeStudy(111)
   );
   if (Pelle.isDisabled("IPMults")) {
-    return Decimal.pow10(player.records.thisInfinity.maxAM.log10().toNumber() / div - 0.75)
+    const ip = Decimal.pow10(player.records.thisInfinity.maxAM.log10().toNumber() / div - 0.75)
       .timesEffectsOf(PelleRifts.vacuum)
-      .times(Pelle.specialGlyphEffect.infinity)
-      .floor();
+      .times(Pelle.specialGlyphEffect.infinity);
+    return applyBasePrestigePointBoost(ip).pow(Annihilation.infinityPointPower).floor();
   }
   let ip = player.break
     ? Decimal.pow10(player.records.thisInfinity.maxAM.log10().toNumber() / div - 0.75)
@@ -116,7 +130,7 @@ export function gainedInfinityPoints() {
     ip = ip.pow(getSecondaryGlyphEffect("infinityIP"));
   }
 
-  return ip.floor();
+  return applyBasePrestigePointBoost(ip).pow(Annihilation.infinityPointPower).floor();
 }
 
 function totalEPMult() {
@@ -136,8 +150,9 @@ function totalEPMult() {
 }
 
 export function gainedEternityPoints() {
-  let ep = DC.D5.pow(player.records.thisEternity.maxIP.plus(
-    gainedInfinityPoints()).log10().toNumber() / (308 - PelleRifts.recursion.effectValue.toNumber()) - 0.7).times(totalEPMult());
+  const epExponent = player.records.thisEternity.maxIP.plus(gainedInfinityPoints()).log10().toNumber() /
+    (308 - PelleRifts.recursion.effectValue.toNumber()) - 0.7;
+  let ep = DC.D5.pow(epExponent).times(totalEPMult());
 
   if (Teresa.isRunning) {
     ep = ep.pow(0.55);
@@ -150,11 +165,13 @@ export function gainedEternityPoints() {
     ep = ep.pow(getSecondaryGlyphEffect("timeEP"));
   }
 
-  return ep.floor();
+  return applyBasePrestigePointBoost(ep).floor();
 }
 
 export function requiredIPForEP(epAmount) {
-  return Decimal.pow10(308 * (Decimal.log(Decimal.divide(epAmount, totalEPMult()), 5).toNumber() + 0.7))
+  const unboostedEP = Decimal.divide(Decimal.pow(epAmount, 1 / BASE_PRESTIGE_POINT_POWER),
+    BASE_PRESTIGE_POINT_MULTIPLIER);
+  return Decimal.pow10(308 * (Decimal.log(Decimal.divide(unboostedEP, totalEPMult()), 5).toNumber() + 0.7))
     .clampMin(Number.MAX_VALUE);
 }
 
@@ -284,7 +301,7 @@ export function gainedInfinities() {
   );
   infGain = infGain.times(getAdjustedGlyphEffect("infinityinfmult"));
   infGain = infGain.powEffectOf(SingularityMilestone.infinitiedPow);
-  return infGain;
+  return infGain.clampMax(Decimal.dSafeMax);
 }
 
 export function updateRefresh() {
@@ -366,6 +383,8 @@ export function getGameSpeedupFactor(effectsToConsider, blackHolesActiveOverride
 
 
   factor *= PelleUpgrade.timeSpeedMult.effectValue.toNumber();
+  factor *= Annihilation.gameSpeedMultiplier * Annihilation.firstMilestoneGameSpeedMultiplier;
+  factor *= Achievements.gameSpeedMultiplier;
 
   // 1e-300 is now possible with max inverted BH, going below it would be possible with
   // an effarig glyph.
@@ -435,9 +454,15 @@ export function gameLoop(passDiff, options = {}) {
 
   let diff = passDiff;
   const thisUpdate = Date.now();
-  const realDiff = diff === undefined
+  const requestedRealDiff = diff === undefined
     ? Math.clamp(thisUpdate - player.lastUpdate, 1, 8.64e7)
     : diff;
+  // A corrupt clock or an invalid offline-simulation duration must not turn
+  // numeric player timers into NaN/Infinity. A zero-length tick is safe.
+  const realDiff = Number.isFinite(requestedRealDiff) ? requestedRealDiff : 0;
+  // An undefined delta is the normal live-game path; it is filled from
+  // Enslaved.nextTickDiff below. Only reject explicitly supplied bad values.
+  if (diff !== undefined && !Number.isFinite(diff)) diff = 0;
   if (!GameStorage.ignoreBackupTimer) player.backupTimer += realDiff;
 
   // For single ticks longer than a minute from the GameInterval loop, we assume that the device has gone to sleep or
@@ -557,6 +582,10 @@ export function gameLoop(passDiff, options = {}) {
   Currency.realities.add(uncountabilityGain);
   Currency.perkPoints.add(uncountabilityGain);
 
+  // This income is deliberately based on wall-clock time, so Black Holes and other game-speed effects do not alter it.
+  // Six Perk Points per real-time minute is one point every ten seconds.
+  if (PlayerProgress.realityUnlocked()) Currency.perkPoints.add(realDiff / 10000);
+
   if (Perk.autocompleteEC1.canBeApplied) player.reality.lastAutoEC += realDiff;
 
   EternityChallenge(12).tryFail();
@@ -565,6 +594,9 @@ export function gameLoop(passDiff, options = {}) {
   TimeDimensions.tick(diff);
   InfinityDimensions.tick(diff);
   AntimatterDimensions.tick(diff);
+  // Destruction Dimensions are deliberately real-time only. They are not affected by the
+  // time-played Dimension multiplier, Black Holes, or other altered game-speed effects.
+  DestructionDimensions.tick(realDiff);
 
   const gain = Math.clampMin(FreeTickspeed.fromShards(Currency.timeShards.value).newAmount - player.totalTickGained, 0);
   player.totalTickGained += gain;
@@ -604,7 +636,7 @@ export function gameLoop(passDiff, options = {}) {
   // dilation, but the TP gain function is also coded to behave differently if it's active
   const teresa1 = player.dilation.active && Ra.unlocks.autoTP.canBeApplied;
   const teresa25 = !isInCelestialReality() && Ra.unlocks.unlockDilationStartingTP.canBeApplied;
-  if ((teresa1 || teresa25) && !Pelle.isDoomed) rewardTP();
+  if ((teresa1 || teresa25 || Annihilation.isPerkBought(8)) && !Pelle.isDoomed) rewardTP();
 
   if (Enslaved.canTickHintTimer) {
     player.celestials.enslaved.hintUnlockProgress += Enslaved.isRunning ? realDiff : (realDiff * 0.4);
@@ -658,7 +690,10 @@ function updatePrestigeRates() {
     player.records.thisEternity.bestEPminVal = gainedEternityPoints();
   }
 
-  const currentRSmin = Effarig.shardsGained / Math.clampMin(0.0005, Time.thisRealityRealTime.totalMinutes);
+  const shardMinutes = Math.clampMin(0.0005, Time.thisRealityRealTime.totalMinutes);
+  const currentRSmin = Math.min(Effarig.shardsGained / shardMinutes, Number.MAX_VALUE);
+  // Older overflowed saves may have a malformed rate cached already; repair it before comparison.
+  if (!Number.isFinite(player.records.thisReality.bestRSmin)) player.records.thisReality.bestRSmin = 0;
   if (currentRSmin > player.records.thisReality.bestRSmin && isRealityAvailable()) {
     player.records.thisReality.bestRSmin = currentRSmin;
     player.records.thisReality.bestRSminVal = Effarig.shardsGained;
@@ -705,9 +740,14 @@ function passivePrestigeGen() {
       infGen = infGen.plus(gainedInfinities().times(
         Currency.eternities.value.minus(eternitiedGain.div(2).floor())).times(Time.deltaTime));
     }
-    infGen = infGen.plus(player.partInfinitied);
-    Currency.infinities.add(infGen.floor());
-    player.partInfinitied = infGen.minus(infGen.floor()).toNumber();
+    // Boundless Amplifier can become extremely large. Keep the passive path finite even on
+    // saves where a previous overflow left the fractional Infinity value malformed.
+    const savedFraction = Number.isFinite(player.partInfinitied) ? player.partInfinitied : 0;
+    infGen = infGen.plus(savedFraction).clampMax(Decimal.dSafeMax);
+    const wholeInfinities = infGen.floor();
+    Currency.infinities.add(wholeInfinities);
+    const fractionalInfinities = infGen.minus(wholeInfinities);
+    player.partInfinitied = fractionalInfinities.isFinite() ? fractionalInfinities.toNumber() : 0;
   }
 }
 
@@ -1093,7 +1133,11 @@ export function init() {
   SteamRuntime.initialize();
   Cloud.init();
   GameStorage.load();
-  Tabs.all.find(t => t.config.id === player.options.lastOpenTab).show(true);
+  // Saved tab IDs can become invalid after a mod update adds, removes, or rearranges tabs.
+  // Never let this prevent an old save from loading.
+  const savedTab = Tabs.all.find(t => t.config.id === player.options.lastOpenTab);
+  if (savedTab?.show) savedTab.show(true);
+  else if (Tab.dimensions?.show) Tab.dimensions.show(true);
   Payments.init();
 }
 

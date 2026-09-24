@@ -37,6 +37,15 @@ export const tabs = [
         id: 2,
         hidable: true,
       },
+      {
+        key: "destruction",
+        name: "Destruction Dimensions",
+        symbol: "☄",
+        component: "DestructionDimensionsTab",
+        condition: () => Annihilation.isUnlocked,
+        id: 3,
+        hidable: true,
+      },
     ]
   },
   {
@@ -365,7 +374,7 @@ export const tabs = [
         name: "Imaginary Upgrades",
         symbol: "<i class='fas fa-level-up-alt'></i>",
         component: "ImaginaryUpgradesTab",
-        condition: () => MachineHandler.isIMUnlocked,
+        condition: () => MachineHandler.isIMUnlocked || Annihilation.hasAnnihilated,
         id: 2,
         hidable: true,
       },
@@ -382,7 +391,7 @@ export const tabs = [
         name: "Black Hole",
         symbol: "<i class='fas fa-circle'></i>",
         component: "BlackHoleTab",
-        condition: () => PlayerProgress.realityUnlocked(),
+        condition: () => PlayerProgress.realityUnlocked() || Annihilation.hasAnnihilated,
         id: 4,
         hidable: true,
       },
@@ -391,7 +400,7 @@ export const tabs = [
         name: "Glyph Alchemy",
         symbol: "<i class='fas fa-vial'></i>",
         component: "AlchemyTab",
-        condition: () => Ra.unlocks.unlockGlyphAlchemy.canBeApplied,
+        condition: () => Ra.unlocks.unlockGlyphAlchemy.canBeApplied || Annihilation.hasAnnihilated,
         id: 5,
         hidable: true,
       },
@@ -477,6 +486,40 @@ export const tabs = [
         hidable: true,
       }
     ]
+  },
+  {
+    key: "annihilation",
+    name: "Annihilation",
+    UIClass: "o-tab-btn--annihilation",
+    condition: () => Annihilation.isUnlocked,
+    id: 11,
+    hidable: true,
+    subtabs: [
+      {
+        key: "matter",
+        name: "Annihilation Matter",
+        symbol: "<i class='fas fa-atom'></i>",
+        component: "AnnihilationMatterTab",
+        id: 0,
+        hidable: true,
+      },
+      {
+        key: "power",
+        name: "Annihilation Perks",
+        symbol: "<i class='fas fa-sitemap'></i>",
+        component: "AnnihilationPerksTab",
+        id: 1,
+        hidable: true,
+      },
+      {
+        key: "milestones",
+        name: "Annihilation Milestones",
+        symbol: "<i class='fas fa-flag-checkered'></i>",
+        component: "AnnihilationMilestonesTab",
+        id: 2,
+        hidable: true,
+      },
+    ],
   },
   {
     key: "shop",

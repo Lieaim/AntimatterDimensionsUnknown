@@ -177,4 +177,8 @@ export default {
 .o-sidebar-currency--pelle {
   color: var(--color-pelle--base);
 }
+
+.o-sidebar-currency--annihilation {
+  color: #9e9e9e;
+}
 </style>

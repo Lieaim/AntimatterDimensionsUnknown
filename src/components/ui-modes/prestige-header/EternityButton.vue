@@ -152,8 +152,12 @@ export default {
       this.type = hasNewContent
         ? EP_BUTTON_DISPLAY_TYPE.NORMAL_EXPLORE_NEW_CONTENT
         : EP_BUTTON_DISPLAY_TYPE.NORMAL;
-      this.currentEPRate.copyFrom(gainedEP.dividedBy(
-        TimeSpan.fromMilliseconds(player.records.thisEternity.realTime).totalMinutes));
+      // A reset can leave the timer at exactly zero for a render frame. Clamp it to the same minimum used by
+      // prestige-rate tracking so the header never displays an invalid eInfinite EP/min value.
+      const elapsedMinutes = Math.clampMin(0.0005, TimeSpan.fromMilliseconds(
+        player.records.thisEternity.realTime).totalMinutes);
+      const currentEPRate = gainedEP.dividedBy(elapsedMinutes);
+      this.currentEPRate.copyFrom(Decimal.isFinite(currentEPRate) ? currentEPRate : new Decimal(0));
       this.peakEPRateVal.copyFrom(player.records.thisEternity.bestEPminVal);
       this.peakEPRate.copyFrom(player.records.thisEternity.bestEPmin);
       this.showEPRate = this.peakEPRate.lte(this.rateThreshold);

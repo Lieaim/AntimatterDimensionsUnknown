@@ -23,6 +23,7 @@ export default {
       canRefresh: false,
       level: 0,
       simRealities: 0,
+      perkPoints: 0,
       realityMachines: new Decimal(),
       shardsGained: 0,
       effarigUnlocked: false,
@@ -58,7 +59,7 @@ export default {
     gained() {
       const gainedResources = [];
       gainedResources.push(`${quantifyInt("Reality", this.simRealities)}`);
-      gainedResources.push(`${quantifyInt("Perk Point", this.simRealities)}`);
+      gainedResources.push(`${quantifyInt("Perk Point", this.perkPoints)}`);
       gainedResources.push(`${quantify("Reality Machine", this.realityMachines, 2)}`);
       if (this.effarigUnlocked) {
         gainedResources.push(`${quantify("Relic Shard", this.shardsGained, 2)}`);
@@ -91,6 +92,7 @@ export default {
       this.hasFilter = EffarigUnlock.glyphFilter.isUnlocked;
       this.level = gainedGlyphLevel().actualLevel;
       this.simRealities = 1 + simulatedRealityCount(false);
+      this.perkPoints = this.simRealities * Annihilation.perkPointMultiplier;
       this.hasSpace = GameCache.glyphInventorySpace.value >= this.simRealities;
       const simRMGained = MachineHandler.gainedRealityMachines.times(this.simRealities);
       this.realityMachines.copyFrom(simRMGained.clampMax(MachineHandler.distanceToRMCap));

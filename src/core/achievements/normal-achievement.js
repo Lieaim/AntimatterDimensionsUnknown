@@ -134,6 +134,14 @@ export const Achievements = {
     return unlockedAchievements;
   },
 
+  get completedRows() {
+    return Achievements.allRows.countWhere(row => row.every(ach => ach.isUnlocked));
+  },
+
+  get gameSpeedMultiplier() {
+    return Math.pow(2, Achievements.completedRows);
+  },
+
   get period() {
     return GameCache.achievementPeriod.value;
   },
@@ -165,8 +173,7 @@ export const Achievements = {
   },
 
   _power: new Lazy(() => {
-    const unlockedRows = Achievements.allRows
-      .countWhere(row => row.every(ach => ach.isUnlocked));
+    const unlockedRows = Achievements.completedRows;
     const basePower = Math.pow(1.25, unlockedRows) * Math.pow(1.03, Achievements.effectiveCount);
     const exponent = getAdjustedGlyphEffect("effarigachievement") * Ra.unlocks.achievementPower.effectOrDefault(1);
     return Math.pow(basePower, exponent);

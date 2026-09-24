@@ -121,7 +121,8 @@ export function getDilationGainPerSecond() {
     return new Decimal(tachyonEffect)
       .timesEffectsOf(DilationUpgrade.dtGain, DilationUpgrade.dtGainPelle, DilationUpgrade.flatDilationMult)
       .times(ShopPurchase.dilatedTimePurchases.currentMult ** 0.5)
-      .times(Pelle.specialGlyphEffect.dilation).div(1e5);
+      .times(Pelle.specialGlyphEffect.dilation)
+      .times(Annihilation.dilatedTimeMultiplier).div(1e5);
   }
   let dtRate = new Decimal(Currency.tachyonParticles.value)
     .timesEffectsOf(
@@ -133,19 +134,32 @@ export function getDilationGainPerSecond() {
       Ra.unlocks.continuousTTBoost.effects.dilatedTime,
       Ra.unlocks.peakGamespeedDT
     );
+  // A zero Tachyon Particle base must stay zero. Evaluating a huge Replicanti multiplier afterward can otherwise
+  // create the invalid Decimal operation 0 × Infinity.
+  if (dtRate.eq(0)) return DC.D0;
   dtRate = dtRate.times(getAdjustedGlyphEffect("dilationDT"));
   dtRate = dtRate.times(ShopPurchase.dilatedTimePurchases.currentMult);
-  dtRate = dtRate.times(
-    Math.clampMin(Decimal.log10(Replicanti.amount).toNumber() * getAdjustedGlyphEffect("replicationdtgain"), 1));
-  if (Enslaved.isRunning && !dtRate.eq(0)) dtRate = Decimal.pow10(Math.pow(dtRate.plus(1).log10().toNumber(), 0.85) - 1);
+  // Replicanti can be far beyond JavaScript's number range in this mod. Decimal math avoids
+  // Infinity × 0 becoming NaN when no Replicanti-to-Dilated-Time Glyph effect is equipped.
+  const rawReplicantiDTMultiplier = Decimal.max(
+    Decimal.log10(Replicanti.amount).times(getAdjustedGlyphEffect("replicationdtgain")),
+    DC.D1
+  );
+  const replicantiDTMultiplier = Decimal.isFinite(rawReplicantiDTMultiplier)
+    ? rawReplicantiDTMultiplier
+    : DC.D1;
+  dtRate = dtRate.times(replicantiDTMultiplier);
+  if (Enslaved.isRunning && !dtRate.eq(0)) {
+    dtRate = dtRate.plus(1).log10().pow(0.85).minus(1).pow10();
+  }
   if (V.isRunning) dtRate = dtRate.pow(0.5);
-  return dtRate;
+  return Decimal.isFinite(dtRate) ? dtRate.times(Annihilation.dilatedTimeMultiplier) : DC.D0;
 }
 
 export function tachyonGainMultiplier() {
   if (Pelle.isDisabled("tpMults")) return new Decimal(1);
   const pow = Enslaved.isRunning ? Enslaved.tachyonNerf : 1;
-  return DC.D1.timesEffectsOf(
+  return new Decimal(Annihilation.tachyonParticleMultiplier).timesEffectsOf(
     DilationUpgrade.tachyonGain,
     GlyphSacrifice.dilation,
     Achievement(132),

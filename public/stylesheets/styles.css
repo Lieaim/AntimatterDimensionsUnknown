@@ -744,6 +744,16 @@ button:focus {
   background: var(--color-reality);
 }
 
+.o-tab-btn--annihilation {
+  color: #888;
+  background-color: var(--color-prestige--accent);
+  border-color: #888;
+}
+
+.o-tab-btn--annihilation:hover {
+  background: #888;
+}
+
 .o-tab-btn--celestial {
   color: var(--color-celestials);
   background-color: var(--color-prestige--accent);
@@ -761,7 +771,7 @@ button:focus {
   height: 100%;
   position: absolute;
   z-index: 999;
-  background: url("../images/loading.png") no-repeat;
+  background: url("../images/loading.png?v=ad-unknown-1") no-repeat;
   background-color: black;
   background-position-x: 50%;
   background-position-y: 50%;

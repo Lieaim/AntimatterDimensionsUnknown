@@ -12,19 +12,21 @@ export const eternityUpgrades = {
     id: 2,
     cost: 10,
     description: () => `Infinity Dimension multiplier based on Eternities
-      ((x/${formatInt(200)})^log4(${formatInt(2)}x), softcap at ${format(1e5)} Eternities)`,
+      ((x/${formatInt(200)})^log4(${formatInt(2)}x), softcap at ${format(1e5)} Eternities,
+      hard cap at ${format(1e9)})`,
     effect() {
       const log4 = Math.log4;
       const eterPreCap = Currency.eternities.value.clampMax(1e5).toNumber();
       const base = eterPreCap / 200 + 1;
       const pow = Math.log(eterPreCap * 2 + 1) / log4;
       const multPreCap = Math.pow(base, pow);
-      const eterPostCap = Currency.eternities.value.sub(1e5);
+      const eterPostCap = Currency.eternities.value.sub(1e5).clampMin(0);
       const mult1 = eterPostCap.divide(200).plus(1);
       const mult2 = eterPostCap.times(2).plus(1).log(Math.E).toNumber() / log4;
       const multPostCap = mult1.times(mult2).clampMin(1);
       return multPostCap.times(multPreCap);
     },
+    cap: DC.E9,
     formatEffect: value => formatX(value, 2, 1)
   },
   idMultICRecords: {

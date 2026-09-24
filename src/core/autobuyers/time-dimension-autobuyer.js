@@ -22,7 +22,8 @@ export class TimeDimensionAutobuyerState extends IntervaledAutobuyerState {
   }
 
   get isUnlocked() {
-    return RealityUpgrade(13).isBought && (!Pelle.isDoomed || PelleUpgrade.TDAutobuyers.canBeApplied);
+    return (RealityUpgrade(13).isBought || Annihilation.isPerkBought(2)) &&
+      (!Pelle.isDoomed || PelleUpgrade.TDAutobuyers.canBeApplied);
   }
 
   get resetTickOn() {

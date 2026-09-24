@@ -6,6 +6,13 @@ import { DC } from "./constants";
 import { deepmergeAll } from "@/utility/deepmerge";
 import { GlyphTypes } from "./glyph-effects";
 
+const ALL_NORMAL_CHALLENGES = 0b1111111111110;
+const ALL_INFINITY_CHALLENGES = 0b111111110;
+const ALL_ETERNITY_CHALLENGE_UNLOCKS = 0b1111111111110;
+const ALL_ETERNITY_CHALLENGES = Object.fromEntries(
+  Array.range(1, 13).map(id => [`eterc${id}`, 5])
+);
+
 // This is actually reassigned when importing saves
 // eslint-disable-next-line prefer-const
 window.player = {
@@ -31,7 +38,7 @@ window.player = {
   },
   buyUntil10: true,
   sacrificed: DC.D0,
-  achievementBits: Array.repeat(0, 17),
+  achievementBits: Array.repeat(0, 19),
   secretAchievementBits: Array.repeat(0, 4),
   infinityUpgrades: new Set(),
   infinityRebuyables: [0, 0, 0],
@@ -39,12 +46,12 @@ window.player = {
     normal: {
       current: 0,
       bestTimes: Array.repeat(Number.MAX_VALUE, 11),
-      completedBits: 0,
+      completedBits: ALL_NORMAL_CHALLENGES,
     },
     infinity: {
       current: 0,
       bestTimes: Array.repeat(Number.MAX_VALUE, 8),
-      completedBits: 0,
+      completedBits: ALL_INFINITY_CHALLENGES,
     },
     eternity: {
       current: 0,
@@ -394,7 +401,7 @@ window.player = {
       studies: "",
     }),
   },
-  eternityChalls: {},
+  eternityChalls: ALL_ETERNITY_CHALLENGES,
   respec: false,
   eterc8ids: 50,
   eterc8repl: 40,
@@ -509,7 +516,7 @@ window.player = {
     applyFilterToPurge: false,
     moveGlyphsOnProtection: false,
     perkPoints: 0,
-    unlockedEC: 0,
+    unlockedEC: ALL_ETERNITY_CHALLENGE_UNLOCKS,
     autoEC: true,
     lastAutoEC: 0,
     partEternitied: DC.D0,
@@ -552,6 +559,9 @@ window.player = {
   blackHolePauseTime: 0,
   blackHoleNegative: 1,
   celestials: {
+    annihilation: {
+      quoteBits: 0,
+    },
     teresa: {
       pouredAmount: 0,
       quoteBits: 0,
@@ -758,6 +768,17 @@ window.player = {
       },
       showBought: false,
     }
+  },
+  annihilation: {
+    matter: DC.D0,
+    power: 0,
+    destructionPower: DC.D0,
+    perks: Array.repeat(false, 8),
+    dimensions: Array.repeat(false, 8),
+    destructionDimensions: [],
+    infinityColumns: Array.repeat(false, 4),
+    legacyAutoAchievementsCleared: false,
+    unlocked: false,
   },
   isGameEnd: false,
   tabNotifications: new Set(),
@@ -973,7 +994,7 @@ export const Player = {
 
   get infinityLimit() {
     const challenge = NormalChallenge.current || InfinityChallenge.current;
-    return challenge === undefined ? Decimal.dInf : challenge.goal;
+    return challenge === undefined ? Decimal.dSafeMax : challenge.goal;
   },
 
   get eternityGoal() {
@@ -1078,7 +1099,9 @@ export function guardFromNaNValues(obj) {
           if (!(newValue instanceof Decimal)) {
             throw new Error("Non-Decimal assignment to Decimal player property");
           }
-          if (!isFinite(newValue.mantissa) || !isFinite(newValue.exponent)) {
+          // Break Eternity uses an infinite normal-number exponent for valid multi-layer values such as ee1000.
+          // Check the Decimal itself instead of its Number-only mantissa/exponent views.
+          if (Decimal.isNaN(newValue) || !Decimal.isFinite(newValue)) {
             throw new Error("NaN player property assignment");
           }
           value = newValue;

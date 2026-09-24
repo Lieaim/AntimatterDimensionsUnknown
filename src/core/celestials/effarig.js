@@ -72,8 +72,12 @@ export const Effarig = {
   },
   get shardsGained() {
     if (!TeresaUnlocks.effarig.canBeApplied) return 0;
-    return Math.floor(Math.pow(Currency.eternityPoints.exponent / 7500, this.glyphEffectAmount)) *
-      AlchemyResource.effarig.effectValue;
+    const baseShards = Math.pow(Currency.eternityPoints.exponent / 7500, this.glyphEffectAmount);
+    const gained = baseShards * AlchemyResource.effarig.effectValue;
+    // Relic Shards are stored in normal-number Reality records. At modded endgame values,
+    // keep an overflowing display/stat value finite instead of letting Infinity × 0 become NaN.
+    if (Number.isNaN(gained)) return 0;
+    return Number.isFinite(gained) ? Math.floor(gained) : Number.MAX_VALUE;
   },
   get maxRarityBoost() {
     return 5 * Math.log10(Math.log10(Currency.relicShards.value + 10));

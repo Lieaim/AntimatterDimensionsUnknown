@@ -22,6 +22,7 @@ class SubtabState {
 
   get isHidden() {
     if (Enslaved.isRunning || Pelle.hasGalaxyGenerator) return false;
+    if (this._parent.key === "reality" && Annihilation.hasAnnihilated) return false;
     return ((player.options.hiddenSubtabBits[this._parent.id] & (1 << this.id)) !== 0) &&
       this.hidable;
   }
@@ -216,6 +217,7 @@ export const Tabs = (function() {
       Tab.eternity,
       Tab.reality,
       Tab.celestials,
+      Tab.annihilation,
       Tab.achievements,
       Tab.statistics,
       Tab.options,

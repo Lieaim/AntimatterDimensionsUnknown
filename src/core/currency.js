@@ -200,20 +200,24 @@ Currency.antimatter = new class extends DecimalCurrency {
   get value() { return player.antimatter; }
 
   set value(value) {
-    if (InfinityChallenges.nextIC) InfinityChallenges.notifyICUnlock(value);
-    if (GameCache.cheapestAntimatterAutobuyer.value && value.gte(GameCache.cheapestAntimatterAutobuyer.value)) {
+    const cappedValue = Decimal.min(value, Annihilation.antimatterCap);
+    if (InfinityChallenges.nextIC) InfinityChallenges.notifyICUnlock(cappedValue);
+    if (GameCache.cheapestAntimatterAutobuyer.value &&
+      cappedValue.gte(GameCache.cheapestAntimatterAutobuyer.value)
+    ) {
       // Clicking into the automation tab clears the trigger and prevents it from retriggering as long as the player
       // stays on the tab; leaving the tab with an available autobuyer will immediately force it to trigger again
       TabNotification.newAutobuyer.clearTrigger();
       TabNotification.newAutobuyer.tryTrigger();
     }
-    player.antimatter = value;
-    player.records.thisInfinity.maxAM = player.records.thisInfinity.maxAM.max(value);
-    player.records.thisEternity.maxAM = player.records.thisEternity.maxAM.max(value);
-    player.records.thisReality.maxAM = player.records.thisReality.maxAM.max(value);
+    player.antimatter = cappedValue;
+    player.records.thisInfinity.maxAM = player.records.thisInfinity.maxAM.max(cappedValue);
+    player.records.thisEternity.maxAM = player.records.thisEternity.maxAM.max(cappedValue);
+    player.records.thisReality.maxAM = player.records.thisReality.maxAM.max(cappedValue);
 
     if (Pelle.isDoomed) {
-      player.celestials.pelle.records.totalAntimatter = player.celestials.pelle.records.totalAntimatter.max(value);
+      player.celestials.pelle.records.totalAntimatter = player.celestials.pelle.records.totalAntimatter
+        .max(cappedValue);
     }
   }
 
@@ -248,7 +252,7 @@ Currency.antimatter = new class extends DecimalCurrency {
 Currency.matter = new class extends DecimalCurrency {
   get value() { return player.matter; }
   set value(value) {
-    player.matter = Decimal.min(value, Decimal.dInf);
+    player.matter = Decimal.min(value, Decimal.dSafeMax);
   }
 }();
 
@@ -420,7 +424,12 @@ Currency.relicShards = new class extends NumberCurrency {
 Currency.imaginaryMachines = new class extends NumberCurrency {
   get value() { return player.reality.imaginaryMachines; }
   set value(value) {
-    player.reality.imaginaryMachines = Math.clampMax(value, MachineHandler.currentIMCap);
+    const cap = MachineHandler.currentIMCap;
+    // Imaginary Machines are a normal-number currency, so preserve a valid finite value even
+    // if extreme Reality Machine formulas overflow their intermediate calculation.
+    player.reality.imaginaryMachines = Number.isFinite(value)
+      ? Math.clamp(value, 0, cap)
+      : cap;
   }
 }();
 

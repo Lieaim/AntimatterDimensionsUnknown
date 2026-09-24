@@ -54,6 +54,9 @@ Vue.mixin({
     format(value, places, placesUnder1000) {
       return format(value, places, placesUnder1000);
     },
+    formatAnnihilation(value, places, placesUnder1000) {
+      return formatAnnihilation(value, places, placesUnder1000);
+    },
     formatInt(value) {
       return formatInt(value);
     },

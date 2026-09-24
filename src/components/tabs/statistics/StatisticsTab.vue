@@ -49,6 +49,15 @@ export default {
         bestRate: new Decimal(0),
         bestRarity: 0,
       },
+      annihilation: {
+        isUnlocked: false,
+        count: 0,
+        matter: new Decimal(0),
+        availablePerks: 0,
+        boughtPerks: 0,
+        annihilatedDimensions: 0,
+        annihilatedInfinityUpgrades: 0,
+      },
       matterScale: [],
       lastMatterTime: 0,
       paperclips: 0,
@@ -140,6 +149,17 @@ export default {
         reality.thisReal.setFrom(records.thisReality.realTime);
         reality.bestRate.copyFrom(bestReality.RMmin);
         reality.bestRarity = Math.max(strengthToRarity(bestReality.glyphStrength), 0);
+      }
+
+      const annihilation = this.annihilation;
+      annihilation.isUnlocked = Annihilation.isUnlocked;
+      if (annihilation.isUnlocked) {
+        annihilation.count = Annihilation.power;
+        annihilation.matter.copyFrom(Annihilation.matter);
+        annihilation.availablePerks = Annihilation.availablePerks;
+        annihilation.boughtPerks = Annihilation.boughtPerkCount;
+        annihilation.annihilatedDimensions = Annihilation.dimensionCount;
+        annihilation.annihilatedInfinityUpgrades = Annihilation.infinityUpgradeCount;
       }
       this.updateMatterScale();
 
@@ -320,6 +340,27 @@ export default {
       <div>Your best Glyph rarity is {{ formatRarity(reality.bestRarity) }}.</div>
       <br>
     </div>
+    <div
+      v-if="annihilation.isUnlocked"
+      class="c-stats-tab-subheader c-stats-tab-general"
+    >
+      <div class="c-stats-tab-title c-stats-tab-annihilation">
+        Annihilation
+      </div>
+      <div>You have performed {{ quantifyInt("Annihilation", annihilation.count) }}.</div>
+      <div>You have {{ format(annihilation.matter, 2, 2) }} Annihilation Matter.</div>
+      <div>
+        You have {{ quantifyInt("Annihilation Perk", annihilation.availablePerks) }} available
+        ({{ quantifyInt("Perk", annihilation.boughtPerks) }} bought).
+      </div>
+      <div>
+        You have annihilated {{ quantifyInt("Antimatter Dimension", annihilation.annihilatedDimensions) }}.
+      </div>
+      <div v-if="annihilation.annihilatedDimensions >= 5">
+        You have annihilated {{ quantifyInt("Infinity Upgrade", annihilation.annihilatedInfinityUpgrades) }}.
+      </div>
+      <br>
+    </div>
   </div>
 </template>
 
@@ -351,6 +392,10 @@ export default {
 
 .c-stats-tab-reality {
   color: var(--color-reality);
+}
+
+.c-stats-tab-annihilation {
+  color: #a0a0a0;
 }
 
 .c-stats-tab-doomed {

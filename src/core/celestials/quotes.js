@@ -110,11 +110,25 @@ class QuoteLine {
   }
 }
 
+// Each Celestial recognizes something about the player on their first encounter after Annihilation.
+// The existing quote lines remain intact for both versions of the encounter.
+const postAnnihilationGreetings = {
+  teresa: "Wait... you seem familiar. Have we met in another Reality?",
+  effarig: "Hmm. I know your face, but I cannot remember where we met.",
+  enslaved: "We have seen you before... or perhaps we remember a time that has yet to happen.",
+  v: "You look familiar. Have I challenged you before?",
+  ra: "There is a memory of you that I cannot quite reach. Have we met?",
+  laitela: "You have crossed our sight before. Yet time insists this is our first meeting.",
+  pelle: "I remember you... but not from this cycle. What have you done?"
+};
+
 class CelQuotes extends BitUpgradeState {
   constructor(config, celestial) {
     super(config);
     this._celestial = celestial;
     this._lines = config.lines.map(line => new QuoteLine(line, this));
+    const greeting = config.id === 0 ? postAnnihilationGreetings[celestial] : undefined;
+    this._postAnnihilationGreeting = greeting ? new QuoteLine(greeting, this) : undefined;
   }
 
   get bits() { return player.celestials[this._celestial].quoteBits; }
@@ -130,11 +144,14 @@ class CelQuotes extends BitUpgradeState {
   }
 
   line(id) {
+    if (this._postAnnihilationGreeting && Annihilation.hasAnnihilated) {
+      return id === 0 ? this._postAnnihilationGreeting : this._lines[id - 1];
+    }
     return this._lines[id];
   }
 
   get totalLines() {
-    return this._lines.length;
+    return this._lines.length + Number(Boolean(this._postAnnihilationGreeting && Annihilation.hasAnnihilated));
   }
 
   show() { this.unlock(); }
@@ -147,6 +164,10 @@ class CelQuotes extends BitUpgradeState {
 
 
 export const Quotes = {
+  annihilation: mapGameDataToObject(
+    GameDatabase.celestials.quotes.annihilation,
+    config => new CelQuotes(config, "annihilation")
+  ),
   teresa: mapGameDataToObject(
     GameDatabase.celestials.quotes.teresa,
     config => new CelQuotes(config, "teresa")

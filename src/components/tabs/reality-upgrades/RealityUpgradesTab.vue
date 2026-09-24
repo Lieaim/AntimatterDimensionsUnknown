@@ -6,6 +6,11 @@ export default {
   components: {
     RealityUpgradeButton
   },
+  data() {
+    return {
+      hasAnnihilated: false,
+    };
+  },
   computed: {
     upgrades: () => RealityUpgrades.all,
     costScalingTooltip: () => `Prices start increasing faster above ${format(1e30)} RM and then even faster
@@ -16,6 +21,9 @@ export default {
       unlocked the upgrade.`,
   },
   methods: {
+    update() {
+      this.hasAnnihilated = Annihilation.hasAnnihilated;
+    },
     id(row, column) {
       return (row - 1) * 5 + column - 1;
     }
@@ -34,21 +42,28 @@ export default {
       </span>
       and the rest are single-purchase.
       <br>
-      Single-purchase upgrades also have requirements which, once completed, permanently unlock the ability
-      to purchase the upgrades at any point.
-      <span :ach-tooltip="possibleTooltip">
-        <i class="fas fa-question-circle" />
-      </span>
+      <template v-if="hasAnnihilated">
+        After Annihilation, single-purchase upgrades have no extra unlock requirements.
+      </template>
+      <template v-else>
+        Single-purchase upgrades also have requirements which, once completed, permanently unlock the ability
+        to purchase the upgrades at any point.
+        <span :ach-tooltip="possibleTooltip">
+          <i class="fas fa-question-circle" />
+        </span>
+      </template>
       <br>
-      Locked upgrades show their requirement and effect by default; unlocked ones show
-      their effect, current bonus, and cost. Hold shift to swap this behavior.
-      <br>
-      You can shift-click upgrades with <i class="fas fa-lock-open" /> to make the game prevent you
-      from doing anything this Reality which would cause you to fail their unlock condition.
-      <span :ach-tooltip="lockTooltip">
-        <i class="fas fa-question-circle" />
-      </span>
-      <br>
+      <template v-if="!hasAnnihilated">
+        Locked upgrades show their requirement and effect by default; unlocked ones show
+        their effect, current bonus, and cost. Hold shift to swap this behavior.
+        <br>
+        You can shift-click upgrades with <i class="fas fa-lock-open" /> to make the game prevent you
+        from doing anything this Reality which would cause you to fail their unlock condition.
+        <span :ach-tooltip="lockTooltip">
+          <i class="fas fa-question-circle" />
+        </span>
+        <br>
+      </template>
       Every completed row of purchased upgrades increases your Glyph level by {{ formatInt(1) }}.
     </div>
     <div

@@ -19,7 +19,7 @@ export default {
   methods: {
     update() {
       this.isDoomed = Pelle.isDoomed;
-      this.realityGlyphLevel = AlchemyResource.reality.effectValue;
+      this.realityGlyphLevel = Math.min(AlchemyResource.reality.effectValue, Annihilation.realityGlyphLevelCap);
       const realityEffectConfigs = GlyphEffects.all
         .filter(eff => eff.glyphTypes.includes("reality"))
         .sort((a, b) => a.bitmaskIndex - b.bitmaskIndex);

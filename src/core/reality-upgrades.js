@@ -73,7 +73,9 @@ class RealityUpgradeState extends BitPurchasableMechanicState {
   }
 
   get isAvailableForPurchase() {
-    return (player.reality.upgReqs & (1 << this.id)) !== 0;
+    // These two upgrades are intentionally requirement-free in AD: Unknown.
+    return this.id === 12 || this.id === 23 || Annihilation.hasAnnihilated || Annihilation.isPerkBought(7) ||
+      (player.reality.upgReqs & (1 << this.id)) !== 0;
   }
 
   get isPossible() {

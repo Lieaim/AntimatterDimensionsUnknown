@@ -97,7 +97,7 @@ export const infinityChallenges = [
       // necessarily 2.5x by the time the player sees this challenge; it's probably most accurate to say what it
       // currently is, and this phrasing avoids 10x ➜ 10x with the old description.
       const mult = Effects.max(
-        2,
+        2.5,
         InfinityUpgrade.dimboostMult,
         InfinityChallenge(7).reward,
         TimeStudy(81)

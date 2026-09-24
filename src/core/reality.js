@@ -309,7 +309,7 @@ function giveRealityRewards(realityProps) {
     realityProps.gainedGlyphLevel.actualLevel, realityAndPPMultiplier, multiplier,
     MachineHandler.projectedIMCap);
   Currency.realities.add(realityAndPPMultiplier);
-  Currency.perkPoints.add(realityAndPPMultiplier);
+  Currency.perkPoints.add(realityAndPPMultiplier * Annihilation.perkPointMultiplier);
   if (TeresaUnlocks.effarig.canBeApplied) {
     Currency.relicShards.add(realityProps.gainedShards * multiplier);
   }
@@ -631,7 +631,7 @@ export function finishProcessReality(realityProps) {
   player.galaxies = 0;
   player.partInfinityPoint = 0;
   player.partInfinitied = 0;
-  player.break = false;
+  player.break = Annihilation.hasAnnihilated;
   player.IPMultPurchases = 0;
   Currency.infinityPower.reset();
   Currency.timeShards.reset();
@@ -642,18 +642,14 @@ export function finishProcessReality(realityProps) {
   // This has to be reset before Currency.eternities to make the bumpLimit logic work correctly
   EternityUpgrade.epMult.reset();
   if (!PelleUpgrade.eternitiesNoReset.canBeApplied) Currency.eternities.reset();
+  if (Achievement(196).isUnlocked) Currency.eternities.bumpTo(1000);
   player.records.thisEternity.time = 0;
   player.records.thisEternity.realTime = 0;
   player.records.bestEternity.time = 999999999999;
   player.records.bestEternity.realTime = 999999999999;
   if (!PelleUpgrade.keepEternityUpgrades.canBeApplied) player.eternityUpgrades.clear();
   player.totalTickGained = 0;
-  if (!PelleUpgrade.keepEternityChallenges.canBeApplied) player.eternityChalls = {};
-  player.reality.unlockedEC = 0;
   player.reality.lastAutoEC = 0;
-  player.challenge.eternity.current = 0;
-  if (!PelleUpgrade.timeStudiesNoReset.canBeApplied) player.challenge.eternity.unlocked = 0;
-  player.challenge.eternity.requirementBits = 0;
   player.respec = false;
   player.eterc8ids = 50;
   player.eterc8repl = 40;
@@ -837,6 +833,8 @@ export function isInCelestialReality() {
 function lockAchievementsOnReality() {
   if (Perk.achievementGroup5.isBought) return;
   for (const achievement of Achievements.preReality) {
+    // Ultimate Destruction makes all standard effect-bearing achievements permanent.
+    if (Achievement(191).isUnlocked && achievement.config.effect !== undefined) continue;
     achievement.lock();
   }
   player.reality.achTimer = 0;

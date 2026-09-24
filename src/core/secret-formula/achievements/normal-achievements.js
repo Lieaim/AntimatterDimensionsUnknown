@@ -480,7 +480,7 @@ export const normalAchievements = [
     checkRequirement: () => Currency.antimatter.gte(DC.D9_9999E9999),
     checkEvent: GAME_EVENT.GAME_TICK_AFTER,
     reward: "Antimatter Dimensions gain a multiplier based on current antimatter.",
-    effect: () => Currency.antimatter.value.pow(0.00002).plus(1),
+    effect: () => Currency.antimatter.value.pow(0.00002).plus(1).pow(Achievement(193).isUnlocked ? 100 : 1),
     formatEffect: value => `${formatX(value, 2, 2)}`
   },
   {
@@ -1382,5 +1382,67 @@ export const normalAchievements = [
     description: "Beat the game.",
     checkRequirement: () => GameEnd.endState > END_STATE_MARKERS.GAME_END && !GameEnd.removeAdditionalEnd,
     checkEvent: GAME_EVENT.GAME_TICK_AFTER
+  },
+  {
+    id: 191,
+    name: "Ultimate Destruction",
+    description: "Perform an Annihilation.",
+    checkRequirement: () => Annihilation.hasAnnihilated,
+    checkEvent: GAME_EVENT.GAME_TICK_AFTER,
+    reward: "Permanently keep Time Study 181 and all boost-giving Achievements in rows 1-13.",
+  },
+  {
+    id: 192,
+    name: "how am i supposed to make antimatter now?",
+    description: "Annihilate Antimatter Dimension 1.",
+    checkRequirement: () => Annihilation.isDimensionAnnihilated(1),
+    checkEvent: GAME_EVENT.GAME_TICK_AFTER,
+    reward: "Antimatter Galaxies are 2.5% stronger and Dimension Boosts are 10% stronger.",
+    effect: 1.1,
+  },
+  {
+    id: 193,
+    name: "Infinity go bye bye",
+    description: "Annihilate Antimatter Dimensions 1-5, then unlock Infinity Annihilation.",
+    checkRequirement: () => Array.range(1, 5).every(tier => Annihilation.isDimensionAnnihilated(tier)) &&
+      Annihilation.isInfinityColumnAnnihilated(0),
+    checkEvent: GAME_EVENT.GAME_TICK_AFTER,
+    reward: "Achievement 73's effect is raised to the 100th power.",
+  },
+  {
+    id: 194,
+    name: "Unwritten Future",
+    description: "A future Annihilation achievement.",
+    checkRequirement: () => false,
+    checkEvent: GAME_EVENT.GAME_TICK_AFTER,
+  },
+  {
+    id: 195,
+    name: "Unwritten Future",
+    description: "A future Annihilation achievement.",
+    checkRequirement: () => false,
+    checkEvent: GAME_EVENT.GAME_TICK_AFTER,
+  },
+  {
+    id: 196,
+    name: "Wait... do i know you?",
+    description: "Unlock Celestials after performing an Annihilation.",
+    checkRequirement: () => Annihilation.hasAnnihilated && Teresa.isUnlocked,
+    checkEvent: GAME_EVENT.GAME_TICK_AFTER,
+    reward: "Start Realities and Annihilations with 1,000 Eternities.",
+  },
+  {
+    id: 197,
+    name: "Unwritten Future",
+    description: "A future Annihilation achievement.",
+    checkRequirement: () => false,
+    checkEvent: GAME_EVENT.GAME_TICK_AFTER,
+  },
+  {
+    id: 198,
+    name: "Unwritten Future",
+    description: "A future Annihilation achievement.",
+    checkRequirement: () => false,
+    checkEvent: GAME_EVENT.GAME_TICK_AFTER,
   },
 ];

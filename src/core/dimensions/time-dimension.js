@@ -200,7 +200,7 @@ class TimeDimensionState extends DimensionState {
   get multiplier() {
     const tier = this._tier;
 
-    if (EternityChallenge(11).isRunning) return DC.D1;
+    if (EternityChallenge(11).isRunning) return new Decimal(Annihilation.dimensionPlaytimeMultiplier);
     let mult = GameCache.timeDimensionCommonMultiplier.value
       .timesEffectsOf(
         tier === 1 ? TimeStudy(11) : null,
@@ -230,7 +230,7 @@ class TimeDimensionState extends DimensionState {
       mult = mult.pow(0.5);
     }
 
-    return mult;
+    return mult.times(Annihilation.dimensionPlaytimeMultiplier);
   }
 
   get productionPerSecond() {

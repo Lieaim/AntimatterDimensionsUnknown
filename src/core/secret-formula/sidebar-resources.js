@@ -131,4 +131,20 @@ export const sidebarResources = [
     formatValue: x => format(x, 2),
     formatClass: "o-sidebar-currency--pelle",
   },
+  {
+    id: 17,
+    optionName: "Annihilation Matter",
+    isAvailable: () => Annihilation.isUnlocked,
+    value: () => Annihilation.matter,
+    formatValue: x => format(x, 2),
+    formatClass: "o-sidebar-currency--annihilation",
+  },
+  {
+    id: 18,
+    optionName: "Annihilations",
+    isAvailable: () => Annihilation.isUnlocked,
+    value: () => new Decimal(Annihilation.power),
+    formatValue: x => format(x, 2, 0),
+    formatClass: "o-sidebar-currency--annihilation",
+  },
 ];

@@ -12,9 +12,15 @@ const rebuyable = props => {
     props.initialCost * props.costMult
   );
   const { effect } = props;
-  props.effect = () => Math.pow(
-    effect + ImaginaryUpgrade(props.id).effectOrDefault(0),
-    player.reality.rebuyables[props.id] * getAdjustedGlyphEffect("realityrow1pow"));
+  props.effect = () => {
+    const base = effect + ImaginaryUpgrade(props.id).effectOrDefault(0);
+    const exponent = player.reality.rebuyables[props.id] * getAdjustedGlyphEffect("realityrow1pow");
+    // Only Boundless Amplifier feeds huge values into a Decimal-based Infinity-gain path.
+    // The other rebuyables must remain normal numbers because their callers use Effects.product().
+    return props.id === 5
+      ? new Decimal(base).pow(exponent).clampMax(Decimal.dSafeMax)
+      : Math.pow(base, exponent);
+  };
   props.description = () => props.textTemplate.replace("{value}",
     ImaginaryUpgrade(props.id).effectValue === 0
       ? formatInt(effect)
@@ -164,12 +170,8 @@ export const realityUpgrades = [
     name: "The Knowing Existence",
     id: 12,
     cost: 50,
-    requirement: () => `Eternity for ${format(DC.E70)} Eternity Points without completing Eternity Challenge 1`,
-    hasFailed: () => EternityChallenge(1).completions !== 0,
-    checkRequirement: () => Currency.eternityPoints.exponent >= 70 && EternityChallenge(1).completions === 0,
-    checkEvent: GAME_EVENT.ETERNITY_RESET_AFTER,
-    canLock: true,
-    lockEvent: "complete Eternity Challenge 1",
+    requirement: "No requirements",
+    checkRequirement: () => true,
     description: "Eternity Point multiplier based on Reality and Time Theorem count",
     effect: () => Currency.timeTheorems.value
       .minus(DC.E3).clampMin(2)
@@ -327,11 +329,8 @@ export const realityUpgrades = [
     name: "Replicative Rapidity",
     id: 23,
     cost: 100000,
-    requirement: () => `Reality in under ${formatInt(15)} minutes of game time
-      (Fastest: ${Time.bestReality.toStringShort()})`,
-    hasFailed: () => Time.thisReality.totalMinutes >= 15,
-    checkRequirement: () => Time.thisReality.totalMinutes < 15,
-    checkEvent: GAME_EVENT.REALITY_RESET_BEFORE,
+    requirement: "No requirements",
+    checkRequirement: () => true,
     description: "Replicanti speed is boosted based on your fastest game-time Reality",
     effect: () => 15 / Math.clamp(Time.bestReality.totalMinutes, 1 / 12, 15),
     cap: 180,

@@ -20,7 +20,7 @@ export const MultiplierTabHelper = {
 
   // Helper method for galaxy strength multipliers affecting all galaxy types (this is used a large number of times)
   globalGalaxyMult() {
-    return Effects.product(
+    return 1.1 * Effects.product(
       InfinityUpgrade.galaxyBoost,
       InfinityUpgrade.galaxyBoost.chargedEffect,
       BreakInfinityUpgrade.galaxyBoost,

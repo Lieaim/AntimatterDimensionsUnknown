@@ -1,3 +1,5 @@
+import { DC } from "../constants";
+
 export class DimensionState {
   constructor(getData, tier) {
     this._tier = tier;
@@ -33,7 +35,13 @@ export class DimensionState {
   }
 
   productionForDiff(diff) {
-    return this.productionPerSecond.times(diff / 1000);
+    // Offline simulation should always supply a finite delta. Ignore an invalid
+    // one rather than allowing it to poison a Decimal amount with NaN.
+    if (!Number.isFinite(diff) || diff <= 0) return DC.D0;
+
+    const production = this.productionPerSecond;
+    if (!production.isFinite()) return Decimal.dSafeMax;
+    return production.times(diff / 1000).clampMax(Decimal.dSafeMax);
   }
 
   produceCurrency(currency, diff) {

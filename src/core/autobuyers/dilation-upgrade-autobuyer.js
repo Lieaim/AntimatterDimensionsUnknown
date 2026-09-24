@@ -12,11 +12,13 @@ export class DilationUpgradeAutobuyerState extends IntervaledAutobuyerState {
   }
 
   get interval() {
-    return 1000 * Perk.autobuyerFasterDilation.effectOrDefault(1) / PerkShopUpgrade.autoSpeed.effectOrDefault(1);
+    const annihilationSpeed = Annihilation.hasAnnihilated ? 5 : 2;
+    return 1000 * Perk.autobuyerFasterDilation.effectOrDefault(1) /
+      (PerkShopUpgrade.autoSpeed.effectOrDefault(1) * annihilationSpeed);
   }
 
   get isUnlocked() {
-    return Perk.autobuyerDilation.isEffectActive && !Pelle.isDoomed;
+    return (Perk.autobuyerDilation.isEffectActive || Annihilation.isPerkBought(4)) && !Pelle.isDoomed;
   }
 
   get resetTickOn() {

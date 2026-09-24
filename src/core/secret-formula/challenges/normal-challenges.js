@@ -56,7 +56,8 @@ export const normalChallenges = [
     legacyId: 6,
     isQuickResettable: false,
     description:
-      () => `the Tickspeed purchase multiplier starts at ${formatX(1.080, 0, 3)} instead of ${formatX(1.1245, 0, 3)}.`,
+      () => `the Tickspeed purchase multiplier starts at ${formatX(1.080, 0, 3)} instead of
+        ${formatX(baseTickspeedUpgradeMultiplier(), 0, 4)}.`,
     name: "5th Antimatter Dimension Autobuyer",
     reward: "Upgradeable 5th Antimatter Dimension Autobuyer",
     lockedAt: DC.D0,

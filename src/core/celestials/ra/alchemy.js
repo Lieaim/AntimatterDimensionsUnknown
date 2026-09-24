@@ -84,6 +84,10 @@ class AlchemyResourceState extends GameMechanicState {
     return AlchemyReactions.all[this.id];
   }
 
+  get capMultiplier() {
+    return this.id === ALCHEMY_RESOURCE.REALITY ? 1 : Annihilation.alchemyResourceCapMultiplier;
+  }
+
   /**
    * @abstract
    */
@@ -111,14 +115,18 @@ class BasicAlchemyResourceState extends AlchemyResourceState {
   }
 
   get cap() {
-    return Math.clampMax(Ra.alchemyResourceCap, this.highestRefinementValue);
+    return Math.clampMax(Ra.alchemyResourceCap * this.capMultiplier, this.highestRefinementValue);
   }
 }
 
 class AdvancedAlchemyResourceState extends AlchemyResourceState {
   get cap() {
     const reagentCaps = this.reaction.reagents.map(x => x.resource.cap);
-    return Math.min(...reagentCaps);
+    const inheritedCap = Math.min(...reagentCaps);
+    // Reality is exempt from the general Alchemy cap boost, but PR2 and ULT1 increase its Glyph creation cap.
+    return this.id === ALCHEMY_RESOURCE.REALITY
+      ? Annihilation.realityGlyphLevelCap
+      : inheritedCap;
   }
 }
 

@@ -26,7 +26,8 @@ export default {
       buy10Mult: new Decimal(0),
       currentSacrifice: new Decimal(0),
       hasRealityButton: false,
-      multiplierText: ""
+      multiplierText: "",
+      visibleTiers: Array.range(1, 8),
     };
   },
   methods: {
@@ -37,6 +38,7 @@ export default {
       this.buy10Mult.copyFrom(AntimatterDimensions.buyTenMultiplier);
       this.currentSacrifice.copyFrom(Sacrifice.totalBoost);
       this.hasRealityButton = PlayerProgress.realityUnlocked() || TimeStudy.reality.isBought;
+      this.visibleTiers = Array.range(1, 8).filter(tier => !Annihilation.isDimensionAnnihilated(tier));
       const sacText = this.isSacrificeUnlocked
         ? ` | Dimensional Sacrifice multiplier: ${formatX(this.currentSacrifice, 2, 2)}`
         : "";
@@ -56,7 +58,7 @@ export default {
     <TickspeedRow />
     <div class="l-dimensions-container">
       <AntimatterDimensionRow
-        v-for="tier in 8"
+        v-for="tier in visibleTiers"
         :key="tier"
         :tier="tier"
       />

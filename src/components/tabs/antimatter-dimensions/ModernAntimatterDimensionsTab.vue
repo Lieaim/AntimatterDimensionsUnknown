@@ -31,6 +31,7 @@ export default {
       isContinuumActive: false,
       multiplierText: "",
       isFullyAutomated: false,
+      visibleTiers: Array.range(1, 8),
     };
   },
   computed: {
@@ -73,6 +74,7 @@ export default {
       return this.buyUntil10 ? "Until 10" : "Buy 1";
     },
     update() {
+      this.visibleTiers = Array.range(1, 8).filter(tier => !Annihilation.isDimensionAnnihilated(tier));
       this.hasDimensionBoosts = player.dimensionBoosts > 0;
       this.buyUntil10 = player.buyUntil10;
       this.hasContinuum = Laitela.continuumUnlocked;
@@ -133,7 +135,7 @@ export default {
     <TickspeedRow />
     <div class="l-dimensions-container">
       <AntimatterDimensionRow
-        v-for="tier in 8"
+        v-for="tier in visibleTiers"
         :key="tier"
         :tier="tier"
       />

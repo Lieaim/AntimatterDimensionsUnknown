@@ -19,11 +19,15 @@ export function effectiveBaseGalaxies() {
   return Math.max(player.galaxies + GalaxyGenerator.galaxies + replicantiGalaxies + freeGalaxies, 0);
 }
 
+export function baseTickspeedUpgradeMultiplier() {
+  return Annihilation.hasAnnihilated ? 1.1245 : 1.5;
+}
+
 export function getTickSpeedMultiplier() {
   if (InfinityChallenge(3).isRunning) return DC.D1;
   if (Ra.isRunning) return DC.C1D1_1245;
   let galaxies = effectiveBaseGalaxies();
-  const effects = Effects.product(
+  const effects = 1.1 * Annihilation.galaxyStrength * Effects.product(
     InfinityUpgrade.galaxyBoost,
     InfinityUpgrade.galaxyBoost.chargedEffect,
     BreakInfinityUpgrade.galaxyBoost,
@@ -38,7 +42,7 @@ export function getTickSpeedMultiplier() {
   if (galaxies < 3) {
     // Magic numbers are to retain balancing from before while displaying
     // them now as positive multipliers rather than negative percentages
-    let baseMultiplier = 1 / 1.1245;
+    let baseMultiplier = 1 / baseTickspeedUpgradeMultiplier();
     if (player.galaxies === 1) baseMultiplier = 1 / 1.11888888;
     if (player.galaxies === 2) baseMultiplier = 1 / 1.11267177;
     if (NormalChallenge(5).isRunning) {
@@ -217,7 +221,8 @@ export const FreeTickspeed = {
       Math.max(getAdjustedGlyphEffect("cursedtickspeed"), 1));
     const logTickmult = Math.log(tickmult);
     const logShards = shards.ln().toNumber();
-    const uncapped = Math.max(0, logShards / logTickmult);
+    // Destruction Power improves the Time Shard free-tickspeed formula, rather than ordinary tickspeed upgrades.
+    const uncapped = Math.max(0, logShards / logTickmult) * DestructionDimensions.powerEffect;
     if (uncapped <= FreeTickspeed.softcap) {
       this.multToNext = tickmult;
       return {

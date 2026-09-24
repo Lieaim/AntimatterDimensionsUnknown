@@ -32,7 +32,7 @@ export class NormalTimeStudyState extends TimeStudyState {
   }
 
   get isBought() {
-    return GameCache.timeStudies.value[this.id];
+    return GameCache.timeStudies.value[this.id] || (this.id === 181 && Achievement(191).isUnlocked);
   }
 
   // The requiresST prop is an array containing IDs indicating other studies which, if ANY in the array are purchased,

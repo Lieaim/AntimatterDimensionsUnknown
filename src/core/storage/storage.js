@@ -144,7 +144,10 @@ export const GameStorage = {
     this.loadPlayerObject(this.saves[slot] ?? Player.defaultStart);
     this.loadBackupTimes();
     this.backupOfflineSlots();
-    Tabs.all.find(t => t.id === player.options.lastOpenTab).show(false);
+    // A removed or rearranged mod tab must not prevent an older save from loading.
+    const savedTab = Tabs.all.find(t => t.id === player.options.lastOpenTab);
+    if (savedTab?.show) savedTab.show(false);
+    else if (Tab.dimensions?.show) Tab.dimensions.show(false);
     Modal.hideAll();
     Cloud.resetTempState();
     GameUI.notify.info("Game loaded");

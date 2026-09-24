@@ -12,7 +12,13 @@ window.CodeMirror = CodeMirror;
 window.Decimal = Decimal;
 window.Vue = Vue;
 
-// break_eternity.js's log-family methods return NaN for an input of exactly zero, whereas
+// Break_eternity.js has no largest finite value, so dInf is unsafe in gameplay
+// arithmetic: multiplying two infinite values produces NaN. Use an enormous,
+// finite safety ceiling instead; it is far beyond Break Infinity's old 9ee15
+// limit and does not restrict ordinary Break_Eternity progression.
+Decimal.dSafeMax = Decimal.fromComponents(1, 2, Number.MAX_VALUE);
+
+// Break_eternity.js's log-family methods return NaN for an input of exactly zero, whereas
 // break_infinity.js (and standard Math.log semantics) return -Infinity. This is a genuine
 // behavioral divergence, not just the well-known Decimal-vs-number return type difference (which
 // is fixed at each call site with .toNumber() instead, since blanket-patching that part would
@@ -39,7 +45,7 @@ for (const name of ZERO_INPUT_METHODS) {
   }
 }
 
-// pLog10 ("positive log10") is break_infinity.js's max(0, log10(x)) - it already special-cases
+// PLog10 ("positive log10") is break_infinity.js's max(0, log10(x)) - it already special-cases
 // negative inputs to return 0, but for an input of exactly zero it falls through to log10(0),
 // which needs to clamp to 0 here (not the -Infinity that a bare log10(0) correctly returns above).
 {

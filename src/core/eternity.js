@@ -92,19 +92,15 @@ export function eternity(force, auto, specialConditions = {}) {
   if (player.dilation.active) rewardTP();
 
   // This needs to be after the dilation check for the "can gain TP" check in rewardTP to be correct.
-  if (force) {
-    player.challenge.eternity.current = 0;
-  }
-
   initializeChallengeCompletions();
   initializeResourcesAfterEternity();
 
-  if (!EternityMilestone.keepAutobuyers.isReached && !(Pelle.isDoomed && PelleUpgrade.keepAutobuyers.canBeApplied)) {
+  if (!Annihilation.hasAnnihilated && !EternityMilestone.keepAutobuyers.isReached &&
+      !(Pelle.isDoomed && PelleUpgrade.keepAutobuyers.canBeApplied)) {
     // Fix infinity because it can only break after big crunch autobuyer interval is maxed
     player.break = false;
   }
 
-  player.challenge.eternity.current = 0;
   if (!specialConditions.enteringEC && !Pelle.isDoomed) {
     player.dilation.active = false;
   }
@@ -172,14 +168,10 @@ export function animateAndEternity(callback) {
 }
 
 export function initializeChallengeCompletions(isReality) {
-  NormalChallenges.clearCompletions();
-  if (!PelleUpgrade.keepInfinityChallenges.canBeApplied) InfinityChallenges.clearCompletions();
   if (!isReality && EternityMilestone.keepAutobuyers.isReached || Pelle.isDoomed) {
     NormalChallenges.completeAll();
   }
   if (Achievement(133).isUnlocked && !Pelle.isDoomed) InfinityChallenges.completeAll();
-  player.challenge.normal.current = 0;
-  player.challenge.infinity.current = 0;
 }
 
 export function initializeResourcesAfterEternity() {

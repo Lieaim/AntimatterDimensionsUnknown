@@ -26,6 +26,8 @@ export default {
       achMultToBH: false,
       achMultToTP: false,
       achMultToTT: false,
+      completedRows: 0,
+      achievementGameSpeed: 1,
       renderedRowIndices: []
     };
   },
@@ -86,6 +88,8 @@ export default {
       this.achMultToTP = RealityUpgrade(8).isBought;
       this.achMultToBH = VUnlocks.achievementBH.canBeApplied;
       this.achMultToTT = Ra.unlocks.achievementTTMult.canBeApplied;
+      this.completedRows = Achievements.completedRows;
+      this.achievementGameSpeed = Achievements.gameSpeedMultiplier;
     },
     startRowRendering() {
       const unlockedRows = [];
@@ -120,7 +124,7 @@ export default {
       return this.renderedRowIndices.includes(row);
     },
     isObscured(row) {
-      return this.isDoomed ? false : row === 17;
+      return this.isDoomed ? false : row === 17 && !Annihilation.hasAnnihilated;
     },
     timeDisplay,
     timeDisplayNoDecimals,
@@ -150,6 +154,10 @@ export default {
       <span v-else>
         Achievements provide a multiplier to<SwapAchievementImagesButton />
         <div v-html="boostText" />
+        <div>
+          You also get a {{ formatX(achievementGameSpeed, 2, 3) }} boost to game speed because you have
+          {{ formatInt(completedRows) }} completed achievement rows.
+        </div>
       </span>
     </div>
     <div class="c-achievements-tab__header">

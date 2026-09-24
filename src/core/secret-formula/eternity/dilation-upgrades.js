@@ -27,13 +27,13 @@ export const dilationUpgrades = {
     increment: 10,
     description: () =>
       ((SingularityMilestone.dilatedTimeFromSingularities.canBeApplied || Achievement(187).canBeApplied)
-        ? `${formatX(2 * Effects.product(
+        ? `${formatX(Annihilation.dilatedTimeUpgradeMultiplier * Effects.product(
           SingularityMilestone.dilatedTimeFromSingularities,
           Achievement(187)
         ), 2, 2)} Dilated Time gain`
-        : "Double Dilated Time gain"),
+        : `${formatX(Annihilation.dilatedTimeUpgradeMultiplier, 1, 1)} Dilated Time gain`),
     effect: bought => {
-      const base = 2 * Effects.product(
+      const base = Annihilation.dilatedTimeUpgradeMultiplier * Effects.product(
         SingularityMilestone.dilatedTimeFromSingularities,
         Achievement(187)
       );

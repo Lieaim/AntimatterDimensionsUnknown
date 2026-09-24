@@ -1,3 +1,4 @@
+import { AnnihilationCelestial } from "./annihilation-celestial";
 import { Effarig } from "./effarig";
 import { Enslaved } from "./enslaved";
 import { Laitela } from "./laitela/laitela";
@@ -7,6 +8,7 @@ import { Teresa } from "./teresa";
 import { V } from "./V";
 
 export const Celestials = {
+  annihilation: AnnihilationCelestial,
   teresa: Teresa,
   effarig: Effarig,
   enslaved: Enslaved,

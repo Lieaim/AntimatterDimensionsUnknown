@@ -355,7 +355,7 @@ export function getGlyphLevelInputs() {
     shardFactor,
     singularityEffect,
     rawLevel: baseLevel,
-    actualLevel: Math.max(1, scaledLevel),
+    actualLevel: Math.max(1, scaledLevel * Annihilation.glyphLevelGainMultiplier),
   };
 }
 

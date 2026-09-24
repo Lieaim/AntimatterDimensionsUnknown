@@ -27,10 +27,12 @@ export default {
     },
     message() {
       const resetResouces = [];
-      if (Pelle.isDoomed) resetResouces.push("Antimatter", "Antimatter Dimensions", "Tickspeed");
-      if (!this.perkANRBought) resetResouces.push("Antimatter Dimensions", "Tickspeed");
-      if (!this.keepDimBoost) resetResouces.push("Dimension Boosts");
-      if (!this.keepAntimatter && !this.perkANRBought) resetResouces.push("Antimatter");
+      if (!player.break) {
+        if (Pelle.isDoomed) resetResouces.push("Antimatter", "Antimatter Dimensions", "Tickspeed");
+        if (!this.perkANRBought) resetResouces.push("Antimatter Dimensions", "Tickspeed");
+        if (!this.keepDimBoost) resetResouces.push("Dimension Boosts");
+        if (!this.keepAntimatter && !this.perkANRBought) resetResouces.push("Antimatter");
+      }
       const resetList = makeEnumeration(resetResouces);
       let tickspeedFixed = "";
       if (InfinityChallenge(3).isRunning) {

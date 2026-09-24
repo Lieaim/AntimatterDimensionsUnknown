@@ -61,6 +61,14 @@ export default {
     player.options.updateRate = oldRate;
   },
   methods: {
+    skipCredits() {
+      GameEnd.additionalEnd = END_STATE_MARKERS.SPECTATE_GAME;
+      GameEnd.creditsClosed = true;
+      GameEnd.creditsEverClosed = true;
+      player.annihilation.unlocked = true;
+      this.audio?.pause();
+      GameUI.update();
+    },
     update() {
       const height = (this.$refs.creditsDisplay?.offsetHeight || 0) + innerHeight;
       this.rolling = GameEnd.endState > END_STATE_MARKERS.CREDITS_START;
@@ -80,6 +88,12 @@ export default {
     class="c-credits-container"
     :style="creditStyles"
   >
+    <button
+      class="c-skip-credits-button"
+      @click="skipCredits"
+    >
+      Skip Credits
+    </button>
     <i
       class="c-mute-button fa-solid"
       :class="muteIconClass"
@@ -203,6 +217,20 @@ perfectly the same. */
   left: 2rem;
   font-size: 2rem;
   opacity: 0.5;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.c-skip-credits-button {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  border: 0.1rem solid #222;
+  border-radius: var(--var-border-radius, 0.5rem);
+  padding: 0.45rem 0.9rem;
+  color: #fff;
+  background: #555;
   pointer-events: auto;
   cursor: pointer;
 }

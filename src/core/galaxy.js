@@ -18,7 +18,7 @@ class GalaxyRequirement {
 
 export class Galaxy {
   static get remoteStart() {
-    return RealityUpgrade(21).effectOrDefault(800);
+    return RealityUpgrade(21).effectOrDefault(800) + Annihilation.remoteGalaxyScalingDelay;
   }
 
   static get requirement() {
@@ -96,12 +96,14 @@ export class Galaxy {
   }
 
   static get costScalingStart() {
-    return 100 + TimeStudy(302).effectOrDefault(0) + Effects.sum(
-      TimeStudy(223),
-      TimeStudy(224),
-      EternityChallenge(5).reward,
-      GlyphSacrifice.power
-    );
+    const unmodifiedStart = 100 + Annihilation.distantGalaxyScalingDelay + TimeStudy(302).effectOrDefault(0) +
+      Effects.sum(
+        TimeStudy(223),
+        TimeStudy(224),
+        EternityChallenge(5).reward,
+        GlyphSacrifice.power
+      );
+    return unmodifiedStart;
   }
 
   static get type() {
@@ -122,7 +124,8 @@ export class Galaxy {
 function galaxyReset() {
   EventHub.dispatch(GAME_EVENT.GALAXY_RESET_BEFORE);
   player.galaxies++;
-  if (!Achievement(143).isUnlocked || (Pelle.isDoomed && !PelleUpgrade.galaxyNoResetDimboost.canBeApplied)) {
+  if (!player.break &&
+    (!Achievement(143).isUnlocked || (Pelle.isDoomed && !PelleUpgrade.galaxyNoResetDimboost.canBeApplied))) {
     player.dimensionBoosts = 0;
   }
   softReset(0);

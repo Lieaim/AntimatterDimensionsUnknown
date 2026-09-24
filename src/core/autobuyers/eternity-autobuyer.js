@@ -10,7 +10,7 @@ export class EternityAutobuyerState extends AutobuyerState {
   }
 
   get isUnlocked() {
-    return EternityMilestone.autobuyerEternity.isReached;
+    return EternityMilestone.autobuyerEternity.isReached || Annihilation.isPerkBought(2);
   }
 
   get mode() {
@@ -103,7 +103,7 @@ export class EternityAutobuyerState extends AutobuyerState {
   }
 
   reset() {
-    if (!EternityMilestone.autobuyerEternity.isReached) {
+    if (!this.isUnlocked) {
       this.isActive = false;
     }
   }

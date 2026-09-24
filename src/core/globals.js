@@ -18,6 +18,7 @@ export * from "./notations";
 export * from "./tutorial";
 
 export * from "./new-game";
+export * from "./annihilation";
 
 export * from "./celestials/quotes";
 export * from "./celestials/teresa";
@@ -61,6 +62,7 @@ export * from "./tickspeed";
 export * from "./dimensions/antimatter-dimension";
 export * from "./dimensions/infinity-dimension";
 export * from "./dimensions/time-dimension";
+export * from "./dimensions/destruction-dimension";
 
 export * from "./time-studies";
 

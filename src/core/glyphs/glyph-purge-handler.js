@@ -78,7 +78,7 @@ export const GlyphSacrificeHandler = {
     if (!Ra.unlocks.unlockGlyphAlchemy.canBeApplied) return 0;
     const glyphMaxValue = this.levelRefinementValue(glyph.level);
     const rarityModifier = strengthToRarity(glyph.strength) / 100;
-    return this.glyphRefinementEfficiency * glyphMaxValue * rarityModifier;
+    return this.glyphRefinementEfficiency * glyphMaxValue * rarityModifier * Annihilation.glyphRefinementMultiplier;
   },
   glyphRefinementGain(glyph) {
     if (!Ra.unlocks.unlockGlyphAlchemy.canBeApplied || !generatedTypes.includes(glyph.type)) return 0;
@@ -96,7 +96,7 @@ export const GlyphSacrificeHandler = {
     const currentCap = resource.cap;
     const capAfterRefinement = this.highestRefinementValue(glyph);
     const higherCap = Math.clampMin(currentCap, capAfterRefinement);
-    return Math.clampMax(higherCap, Ra.alchemyResourceCap);
+    return Math.clampMax(higherCap, Ra.alchemyResourceCap * resource.capMultiplier);
   },
   highestRefinementValue(glyph) {
     return this.glyphRawRefinementGain(glyph) / this.glyphRefinementEfficiency;
@@ -110,7 +110,7 @@ export const GlyphSacrificeHandler = {
     const decoherence = AlchemyResource.decoherence.isUnlocked;
     if (!Ra.unlocks.unlockGlyphAlchemy.canBeApplied ||
         (this.glyphRefinementGain(glyph) === 0 && !decoherence) ||
-        (decoherence && AlchemyResources.base.every(x => x.data.amount >= Ra.alchemyResourceCap))) {
+        (decoherence && AlchemyResources.base.every(resource => resource.capped))) {
       this.sacrificeGlyph(glyph, force);
       return;
     }

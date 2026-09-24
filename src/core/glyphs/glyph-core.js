@@ -837,7 +837,11 @@ export function getRarity(x) {
 }
 
 export function getAdjustedGlyphLevel(glyph, realityGlyphBoost = Glyphs.levelBoost, ignoreCelestialEffects = false) {
-  const level = glyph.level;
+  const excludedAnnihilationGlyphTypes = ["reality", "effarig", "cursed"];
+  let level = glyph.level;
+  if (!excludedAnnihilationGlyphTypes.includes(glyph.type)) {
+    level *= Annihilation.glyphLevelMultiplier;
+  }
   if (!ignoreCelestialEffects) {
     if (Pelle.isDoomed) return Math.min(level, Pelle.glyphMaxLevel);
     if (Enslaved.isRunning) return Math.max(level, Enslaved.glyphLevelMin);
