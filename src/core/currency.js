@@ -222,9 +222,10 @@ Currency.antimatter = new class extends DecimalCurrency {
   }
 
   add(amount) {
-    super.add(amount);
-    if (amount.gt(0)) {
-      player.records.totalAntimatter = player.records.totalAntimatter.add(amount);
+    const adjustedAmount = Annihilation.softenAntimatterGain(amount);
+    super.add(adjustedAmount);
+    if (adjustedAmount.gt(0)) {
+      player.records.totalAntimatter = player.records.totalAntimatter.add(adjustedAmount);
       player.requirementChecks.reality.noAM = false;
     }
   }
@@ -424,7 +425,12 @@ Currency.relicShards = new class extends NumberCurrency {
 Currency.imaginaryMachines = new class extends NumberCurrency {
   get value() { return player.reality.imaginaryMachines; }
   set value(value) {
-    player.reality.imaginaryMachines = Math.clampMax(value, MachineHandler.currentIMCap);
+    const cap = MachineHandler.currentIMCap;
+    // Imaginary Machines are a normal-number currency, so preserve a valid finite value even
+    // if extreme Reality Machine formulas overflow their intermediate calculation.
+    player.reality.imaginaryMachines = Number.isFinite(value)
+      ? Math.clamp(value, 0, cap)
+      : cap;
   }
 }();
 

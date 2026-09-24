@@ -37,6 +37,15 @@ export const tabs = [
         id: 2,
         hidable: true,
       },
+      {
+        key: "destruction",
+        name: "Destruction Dimensions",
+        symbol: "☄",
+        component: "DestructionDimensionsTab",
+        condition: () => Annihilation.isUnlocked,
+        id: 3,
+        hidable: true,
+      },
     ]
   },
   {
@@ -482,7 +491,9 @@ export const tabs = [
     key: "annihilation",
     name: "Annihilation",
     UIClass: "o-tab-btn--annihilation",
-    condition: () => Annihilation.isUnlocked,
+    // Keep the page visible from the start; its own reset button explains the
+    // Doomed Reality requirement. This avoids a mid-run parent-tab unlock.
+    condition: () => true,
     id: 11,
     hidable: true,
     subtabs: [
@@ -492,7 +503,7 @@ export const tabs = [
         symbol: "<i class='fas fa-atom'></i>",
         component: "AnnihilationMatterTab",
         id: 0,
-        hidable: true,
+        hidable: false,
       },
       {
         key: "power",
@@ -500,7 +511,7 @@ export const tabs = [
         symbol: "<i class='fas fa-sitemap'></i>",
         component: "AnnihilationPerksTab",
         id: 1,
-        hidable: true,
+        hidable: false,
       },
       {
         key: "milestones",
@@ -508,7 +519,7 @@ export const tabs = [
         symbol: "<i class='fas fa-flag-checkered'></i>",
         component: "AnnihilationMilestonesTab",
         id: 2,
-        hidable: true,
+        hidable: false,
       },
     ],
   },

@@ -36,8 +36,12 @@ export default {
       return this.view.newUI ? "new-ui" : "old-ui";
     },
     page() {
-      const subtab = Tabs.current[this.$viewModel.subtab];
-      return subtab.config.component;
+      // A stale saved subtab must never leave the game with no page component.
+      // This is especially important for custom tabs added after a save was made.
+      const currentTab = Tabs.current;
+      const selectedSubtab = currentTab?.[this.$viewModel.subtab];
+      const fallbackSubtab = currentTab?._currentSubtab ?? currentTab?.subtabs?.[0];
+      return (selectedSubtab ?? fallbackSubtab)?.config?.component ?? "AntimatterDimensionsTab";
     },
     themeCss() {
       return `stylesheets/theme-${this.view.theme}.css`;

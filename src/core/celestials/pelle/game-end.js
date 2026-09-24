@@ -15,7 +15,20 @@ export const END_STATE_MARKERS = {
 };
 
 export const GameEnd = {
+  get isFirstAnnihilationEndingActive() {
+    return player.annihilation?.firstEndingSequenceActive === true;
+  },
+
+  // This mod uses Annihilation after Pelle instead of the vanilla 9ee15 end sequence.
+  // Checking for the mod's save data also repairs saves that had already entered the
+  // old fade-out before this replacement was installed.
+  get isReplacedByAnnihilation() {
+    return player.annihilation !== undefined && !this.isFirstAnnihilationEndingActive;
+  },
+
   get endState() {
+    if (this.isFirstAnnihilationEndingActive) return this.additionalEnd;
+    if (this.isReplacedByAnnihilation) return 0;
     if (this.removeAdditionalEnd) return this.additionalEnd;
     return Math.max((Math.log10(player.celestials.pelle.records.totalAntimatter.plus(1).log10().toNumber() + 1) - 8.7) /
       (Math.log10(9e15) - 8.7) + this.additionalEnd, 0);
@@ -34,7 +47,34 @@ export const GameEnd = {
   creditsClosed: false,
   creditsEverClosed: false,
 
+  startFirstAnnihilationEnding() {
+    player.annihilation.firstEndingSequenceActive = true;
+    player.annihilation.firstEndingPlayed = true;
+    player.isGameEnd = true;
+    this._additionalEnd = END_STATE_MARKERS.GAME_END;
+    this.creditsClosed = false;
+    this.creditsEverClosed = false;
+  },
+
+  finishFirstAnnihilationEnding() {
+    player.annihilation.firstEndingSequenceActive = false;
+    player.isGameEnd = false;
+    this._additionalEnd = 0;
+    this.removeAdditionalEnd = false;
+    this.creditsClosed = false;
+    this.creditsEverClosed = false;
+    GameUI.update();
+  },
+
   gameLoop(diff) {
+    if (this.isReplacedByAnnihilation) {
+      player.isGameEnd = false;
+      this._additionalEnd = 0;
+      this.removeAdditionalEnd = false;
+      this.creditsClosed = false;
+      this.creditsEverClosed = false;
+      return;
+    }
     if (this.removeAdditionalEnd) {
       this.additionalEnd -= Math.min(diff / 200, 0.5);
       if (this.additionalEnd < 4) {

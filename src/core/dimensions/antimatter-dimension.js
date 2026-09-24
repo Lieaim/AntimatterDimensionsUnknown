@@ -53,7 +53,8 @@ export function antimatterDimensionCommonMultiplier() {
 }
 
 function antimatterDimensionBasePower() {
-  return Pelle.isDoomed ? 1.5 : 1.25;
+  // The free base Antimatter Dimension exponent is unavailable while Doomed.
+  return Pelle.isDoomed ? 1 : 1.25;
 }
 
 export function getDimensionFinalMultiplierUncached(tier) {
@@ -64,8 +65,9 @@ export function getDimensionFinalMultiplierUncached(tier) {
       InfinityDimensions.powerConversionRate
     ).max(1).times(DimBoost.multiplierToNDTier(tier))
       .pow(antimatterDimensionBasePower())
-      .pow(Annihilation.antimatterDimensionPower)
-      .pow(Annihilation.infinityAntimatterPower);
+      .pow(Annihilation.antimatterDimensionPowerForTier(tier))
+      .pow(Annihilation.infinityAntimatterPower)
+      .times(Annihilation.dimensionPlaytimeMultiplier);
   }
 
   let multiplier = DC.D1;
@@ -93,8 +95,9 @@ export function getDimensionFinalMultiplierUncached(tier) {
   }
 
   return multiplier.pow(antimatterDimensionBasePower())
-    .pow(Annihilation.antimatterDimensionPower)
-    .pow(Annihilation.infinityAntimatterPower);
+    .pow(Annihilation.antimatterDimensionPowerForTier(tier))
+    .pow(Annihilation.infinityAntimatterPower)
+    .times(Annihilation.dimensionPlaytimeMultiplier);
 }
 
 function applyNDMultipliers(mult, tier) {

@@ -23,13 +23,17 @@ const INFINITY_COLUMN_UPGRADES = [
 
 const INFINITY_COLUMN_COSTS = [DC.E15];
 const FIRST_ANNIHILATION_ANTIMATTER = new Decimal("9e9e15");
+const NON_DOOMED_ANTIMATTER_CAP = new Decimal("8.99999e9e15");
+const ANTIMATTER_GAIN_SOFTCAP = new Decimal("9e9e15");
 export const BASE_ANNIHILATION_MATTER_EXPONENT = 0.7;
 
 const MATTER_MILESTONES = [
   { antimatter: FIRST_ANNIHILATION_ANTIMATTER, matter: DC.D1 },
 ];
 
-const MATTER_GAIN_CAPS = [undefined, new Decimal(10), new Decimal(250), new Decimal("1e4"), new Decimal("1e6")];
+// The first Annihilation always grants its fixed 1 Matter reward. These are the caps for
+// Annihilations 2-5: the old second-reset cap is doubled and the later caps are multiplied by ten.
+const MATTER_GAIN_CAPS = [undefined, new Decimal(20), new Decimal(2500), new Decimal("1e5"), new Decimal("1e7")];
 
 // Reality Perks visible in the QOL2 reference image. They are retained through Annihilation once QOL2 is bought.
 const QOL2_PERMANENT_REALITY_PERKS = [
@@ -150,15 +154,63 @@ export const Annihilation = {
   },
 
   get isUnlocked() {
-    return player.annihilation.unlocked || GameEnd.creditsEverClosed;
+    // The tab becomes available at the 9ee15 threshold, but reaching that threshold
+    // does not grant an Annihilation or bypass the Doomed Reality requirement.
+    return player.annihilation.unlocked || GameEnd.creditsEverClosed ||
+      Currency.antimatter.gte(this.antimatterGainSoftcapStart);
   },
 
   get power() {
     return player.annihilation.power;
   },
 
+  get destructionPower() {
+    // Saves created before Destruction Power existed do not have this field yet.
+    if (player.annihilation.destructionPower === undefined) player.annihilation.destructionPower = DC.D0;
+    return player.annihilation.destructionPower;
+  },
+
+  addDestructionPower(amount) {
+    player.annihilation.destructionPower = this.destructionPower.plus(amount);
+  },
+
   get hasAnnihilated() {
     return this.power > 0;
+  },
+
+  // Each point is fully effective through 10 Power. In every later 10× range, each additional
+  // point contributes 4× less exponent than it did in the preceding range. The segments join
+  // continuously: 1 Power gives ^2, 2 Power gives ^3, and 10 Power gives ^11.
+  get destructionPowerPlaytimeExponent() {
+    const power = this.destructionPower;
+    if (power.lte(0)) return 1;
+    if (power.lte(10)) return 1 + power.toNumber();
+
+    let contribution = 10;
+    let lowerBound = 10;
+    let contributionPerPower = 1 / 4;
+    // The cap keeps this JavaScript-number exponent safe even if the player eventually reaches
+    // extraordinarily large Decimal values. The resulting Decimal multiplier remains enormous.
+    while (contribution < 1e6) {
+      const upperBound = lowerBound * 10;
+      if (power.lte(upperBound)) {
+        return Math.min(1e6, 1 + contribution + power.minus(lowerBound).toNumber() * contributionPerPower);
+      }
+      contribution += (upperBound - lowerBound) * contributionPerPower;
+      lowerBound = upperBound;
+      contributionPerPower /= 4;
+    }
+    return 1e6;
+  },
+
+  // This uses real seconds played so Black Hole speed and offline game-time multipliers cannot inflate it.
+  // Clamp at two seconds: log2(2) is 1, keeping the boost safe on a brand-new save. Destruction
+  // Power then raises this whole playtime multiplier to its progressively softened exponent.
+  get dimensionPlaytimeMultiplier() {
+    const secondsPlayed = Math.max(player.records.realTimePlayed / 1000, 2);
+    return new Decimal(Math.max(1, Math.log2(secondsPlayed)))
+      .pow(this.destructionPowerPlaytimeExponent)
+      .clampMax(Decimal.dSafeMax);
   },
 
   get realityMachineMultiplier() {
@@ -167,6 +219,10 @@ export const Annihilation = {
 
   get imaginaryMachineMultiplier() {
     return this.hasAnnihilated ? 10 : 1;
+  },
+
+  get relicShardMultiplier() {
+    return this.hasAnnihilated ? 100 : 5;
   },
 
   get perkPointMultiplier() {
@@ -235,15 +291,38 @@ export const Annihilation = {
   },
 
   get antimatterCap() {
-    return this.isUnlocked && !this.hasAnnihilated ? this.firstResetRequirement : Decimal.dSafeMax;
+    return Pelle.isDoomed ? Decimal.dSafeMax : NON_DOOMED_ANTIMATTER_CAP;
+  },
+
+  get antimatterGainSoftcapStart() {
+    return ANTIMATTER_GAIN_SOFTCAP;
+  },
+
+  isAntimatterGainSoftcapped(value = Currency.antimatter.value) {
+    return value.gte(this.antimatterGainSoftcapStart);
+  },
+
+  // Each five extra orders of magnitude past 9ee15 doubles the reduction. This
+  // deliberately ramps in slowly rather than abruptly flattening Antimatter gain.
+  softenAntimatterGain(amount, currentAntimatter = Currency.antimatter.value) {
+    if (amount.lte(0)) return amount;
+    const softcapStart = this.antimatterGainSoftcapStart;
+    const uncappedGain = Decimal.max(softcapStart.minus(currentAntimatter), 0);
+    if (amount.lte(uncappedGain)) return amount;
+
+    const excessGain = amount.minus(uncappedGain);
+    const amountAtSoftcap = Decimal.max(currentAntimatter, softcapStart);
+    const extraOrders = Math.max(amountAtSoftcap.div(softcapStart).log10().toNumber(), 0);
+    const reduction = 1 + extraOrders / 5;
+    return uncappedGain.plus(excessGain.div(reduction));
   },
 
   get resetRequirement() {
-    return this.hasAnnihilated ? MATTER_MILESTONES[0].antimatter : this.firstResetRequirement;
+    return MATTER_MILESTONES[0].antimatter;
   },
 
   get canReset() {
-    return this.isUnlocked && Currency.antimatter.gte(this.resetRequirement);
+    return this.isUnlocked && Pelle.isDoomed && Currency.antimatter.gte(this.resetRequirement);
   },
 
   get matterExponent() {
@@ -287,8 +366,14 @@ export const Annihilation = {
   },
 
   get antimatterDimensionPower() {
-    if (this.dimensionCount === 0) return 1;
-    return 2 ** (2 ** (this.dimensionCount - 1));
+    // Each annihilated Dimension doubles the base Annihilation exponent: 2, 4, 8, 16, ...
+    return 2 ** this.dimensionCount;
+  },
+
+  antimatterDimensionPowerForTier(tier) {
+    // Annihilation's extra exponent is full strength on AD1, then halves for each higher
+    // Antimatter Dimension. Preserve the ordinary ^1 baseline on every tier.
+    return 1 + (this.antimatterDimensionPower - 1) * Math.pow(0.5, tier - 1);
   },
 
   get infinityPointPower() {
@@ -358,6 +443,7 @@ export const Annihilation = {
 
   reset() {
     if (!this.canReset) return false;
+    const isFirstAnnihilation = !this.hasAnnihilated && !player.annihilation.firstEndingPlayed;
     // Ultimate Destruction is awarded by the first Annihilation, so its retention reward applies immediately.
     const savedBoostAchievements = Achievements.rows(1, 13)
       .filter(achievement => achievement.isUnlocked && achievement.config.effect !== undefined)
@@ -367,10 +453,18 @@ export const Annihilation = {
     const savedAnnihilation = {
       matter: this.matter.plus(this.matterGain),
       power: this.power + 1,
+      destructionPower: new Decimal(this.destructionPower),
       perks: [...this.perkStates],
       dimensions: [...player.annihilation.dimensions],
+      destructionDimensions: (player.annihilation.destructionDimensions ?? []).map(dimension => ({
+        amount: new Decimal(dimension.amount),
+        bought: dimension.bought,
+        cost: new Decimal(dimension.cost),
+      })),
       infinityColumns: [...player.annihilation.infinityColumns],
       legacyAutoAchievementsCleared: player.annihilation.legacyAutoAchievementsCleared,
+      firstEndingPlayed: player.annihilation.firstEndingPlayed ?? false,
+      firstEndingSequenceActive: false,
       unlocked: true,
     };
     GameEnd.creditsClosed = false;
@@ -391,6 +485,7 @@ export const Annihilation = {
     this.restoreInfinityUpgrades();
     GameUI.update();
     Quotes.annihilation.first.show();
+    if (isFirstAnnihilation) GameEnd.startFirstAnnihilationEnding();
     return true;
   },
 };

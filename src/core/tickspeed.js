@@ -221,7 +221,8 @@ export const FreeTickspeed = {
       Math.max(getAdjustedGlyphEffect("cursedtickspeed"), 1));
     const logTickmult = Math.log(tickmult);
     const logShards = shards.ln().toNumber();
-    const uncapped = Math.max(0, logShards / logTickmult);
+    // Destruction Power improves the Time Shard free-tickspeed formula, rather than ordinary tickspeed upgrades.
+    const uncapped = Math.max(0, logShards / logTickmult) * DestructionDimensions.powerEffect;
     if (uncapped <= FreeTickspeed.softcap) {
       this.multToNext = tickmult;
       return {

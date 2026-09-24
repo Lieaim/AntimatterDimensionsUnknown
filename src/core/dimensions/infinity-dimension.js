@@ -141,7 +141,7 @@ class InfinityDimensionState extends DimensionState {
 
   get multiplier() {
     const tier = this.tier;
-    if (EternityChallenge(11).isRunning) return DC.D1;
+    if (EternityChallenge(11).isRunning) return new Decimal(Annihilation.dimensionPlaytimeMultiplier);
     let mult = GameCache.infinityDimensionCommonMultiplier.value
       .timesEffectsOf(
         tier === 1 ? Achievement(94) : null,
@@ -177,7 +177,7 @@ class InfinityDimensionState extends DimensionState {
       mult = mult.pow(0.5);
     }
 
-    return mult;
+    return mult.times(Annihilation.dimensionPlaytimeMultiplier);
   }
 
   get isProducing() {
@@ -410,6 +410,7 @@ export const InfinityDimensions = {
 
   get powerConversionRate() {
     const multiplier = PelleRifts.paradox.milestones[2].effectOrDefault(1);
-    return (7 + getAdjustedGlyphEffect("infinityrate") + PelleUpgrade.infConversion.effectOrDefault(0)) * multiplier;
+    return (7 + getAdjustedGlyphEffect("infinityrate") + PelleUpgrade.infConversion.effectOrDefault(0)) * multiplier *
+      DestructionDimensions.powerEffect;
   }
 };

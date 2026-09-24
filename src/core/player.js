@@ -772,8 +772,10 @@ window.player = {
   annihilation: {
     matter: DC.D0,
     power: 0,
+    destructionPower: DC.D0,
     perks: Array.repeat(false, 8),
     dimensions: Array.repeat(false, 8),
+    destructionDimensions: [],
     infinityColumns: Array.repeat(false, 4),
     legacyAutoAchievementsCleared: false,
     unlocked: false,

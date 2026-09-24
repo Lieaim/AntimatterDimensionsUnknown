@@ -62,6 +62,11 @@ export default {
   },
   methods: {
     skipCredits() {
+      if (GameEnd.isFirstAnnihilationEndingActive) {
+        this.audio?.pause();
+        GameEnd.finishFirstAnnihilationEnding();
+        return;
+      }
       GameEnd.additionalEnd = END_STATE_MARKERS.SPECTATE_GAME;
       GameEnd.creditsClosed = true;
       GameEnd.creditsEverClosed = true;

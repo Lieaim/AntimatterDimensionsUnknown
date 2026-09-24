@@ -34,12 +34,15 @@ export const MachineHandler = {
   },
 
   get baseIMCap() {
-    return (Math.pow(Math.clampMin(this.uncappedRM.log10().toNumber() - 1000, 0), 2)) *
-      (Math.pow(Math.clampMin(this.uncappedRM.log10().toNumber() - 100000, 1), 0.2));
+    const logRM = this.uncappedRM.log10().toNumber();
+    const cap = Math.pow(Math.clampMin(logRM - 1000, 0), 2) *
+      Math.pow(Math.clampMin(logRM - 100000, 1), 0.2);
+    return Number.isFinite(cap) ? Math.min(cap, Number.MAX_VALUE) : Number.MAX_VALUE;
   },
 
   get currentIMCap() {
-    return player.reality.iMCap * ImaginaryUpgrade(13).effectOrDefault(1);
+    const cap = player.reality.iMCap * ImaginaryUpgrade(13).effectOrDefault(1);
+    return Number.isFinite(cap) ? Math.max(cap, 0) : Number.MAX_VALUE;
   },
 
   // This is iM cap based on in-game values at that instant, may be lower than the actual cap
@@ -63,8 +66,13 @@ export const MachineHandler = {
   },
 
   gainedImaginaryMachines(diff) {
-    return (this.currentIMCap - Currency.imaginaryMachines.value) *
-      (1 - Math.pow(2, (-diff / 1000 / this.scaleTimeForIM))) * Annihilation.imaginaryMachineMultiplier;
+    const cap = this.currentIMCap;
+    const current = Number.isFinite(Currency.imaginaryMachines.value)
+      ? Math.clamp(Currency.imaginaryMachines.value, 0, cap)
+      : cap;
+    const gain = (cap - current) * (1 - Math.pow(2, (-diff / 1000 / this.scaleTimeForIM))) *
+      Annihilation.imaginaryMachineMultiplier;
+    return Number.isFinite(gain) ? Math.clamp(gain, 0, cap - current) : 0;
   },
 
   estimateIMTimer(cost) {

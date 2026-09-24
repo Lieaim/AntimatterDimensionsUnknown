@@ -20,7 +20,11 @@ const BASE_PRESTIGE_POINT_MULTIPLIER = DC.D5;
 const BASE_PRESTIGE_POINT_POWER = 1.25;
 
 function applyBasePrestigePointBoost(points) {
-  return points.times(BASE_PRESTIGE_POINT_MULTIPLIER).pow(BASE_PRESTIGE_POINT_POWER);
+  // The free base IP/EP boost is disabled in a Doomed Reality. Annihilation-specific
+  // modifiers are applied separately after this function and remain active there.
+  return Pelle.isDoomed
+    ? points
+    : points.times(BASE_PRESTIGE_POINT_MULTIPLIER).pow(BASE_PRESTIGE_POINT_POWER);
 }
 
 export function playerInfinityUpgradesOnReset() {
@@ -297,7 +301,7 @@ export function gainedInfinities() {
   );
   infGain = infGain.times(getAdjustedGlyphEffect("infinityinfmult"));
   infGain = infGain.powEffectOf(SingularityMilestone.infinitiedPow);
-  return infGain;
+  return infGain.clampMax(Decimal.dSafeMax);
 }
 
 export function updateRefresh() {
@@ -443,7 +447,7 @@ export function gameLoop(passDiff, options = {}) {
   // In certain cases we want to allow the player to interact with the game's settings and tabs, but prevent any actual
   // resource generation from happening - in these cases, we have to make sure this all comes before the hibernation
   // check or else it'll attempt to run the game anyway
-  if (Speedrun.isPausedAtStart() || GameEnd.creditsEverClosed) {
+  if (Speedrun.isPausedAtStart() || (GameEnd.creditsEverClosed && !GameEnd.isReplacedByAnnihilation)) {
     GameUI.update();
     return;
   }
@@ -590,6 +594,9 @@ export function gameLoop(passDiff, options = {}) {
   TimeDimensions.tick(diff);
   InfinityDimensions.tick(diff);
   AntimatterDimensions.tick(diff);
+  // Destruction Dimensions are deliberately real-time only. They are not affected by the
+  // time-played Dimension multiplier, Black Holes, or other altered game-speed effects.
+  DestructionDimensions.tick(realDiff);
 
   const gain = Math.clampMin(FreeTickspeed.fromShards(Currency.timeShards.value).newAmount - player.totalTickGained, 0);
   player.totalTickGained += gain;
@@ -683,7 +690,10 @@ function updatePrestigeRates() {
     player.records.thisEternity.bestEPminVal = gainedEternityPoints();
   }
 
-  const currentRSmin = Effarig.shardsGained / Math.clampMin(0.0005, Time.thisRealityRealTime.totalMinutes);
+  const shardMinutes = Math.clampMin(0.0005, Time.thisRealityRealTime.totalMinutes);
+  const currentRSmin = Math.min(Effarig.shardsGained / shardMinutes, Number.MAX_VALUE);
+  // Older overflowed saves may have a malformed rate cached already; repair it before comparison.
+  if (!Number.isFinite(player.records.thisReality.bestRSmin)) player.records.thisReality.bestRSmin = 0;
   if (currentRSmin > player.records.thisReality.bestRSmin && isRealityAvailable()) {
     player.records.thisReality.bestRSmin = currentRSmin;
     player.records.thisReality.bestRSminVal = Effarig.shardsGained;
@@ -730,9 +740,14 @@ function passivePrestigeGen() {
       infGen = infGen.plus(gainedInfinities().times(
         Currency.eternities.value.minus(eternitiedGain.div(2).floor())).times(Time.deltaTime));
     }
-    infGen = infGen.plus(player.partInfinitied);
-    Currency.infinities.add(infGen.floor());
-    player.partInfinitied = infGen.minus(infGen.floor()).toNumber();
+    // Boundless Amplifier can become extremely large. Keep the passive path finite even on
+    // saves where a previous overflow left the fractional Infinity value malformed.
+    const savedFraction = Number.isFinite(player.partInfinitied) ? player.partInfinitied : 0;
+    infGen = infGen.plus(savedFraction).clampMax(Decimal.dSafeMax);
+    const wholeInfinities = infGen.floor();
+    Currency.infinities.add(wholeInfinities);
+    const fractionalInfinities = infGen.minus(wholeInfinities);
+    player.partInfinitied = fractionalInfinities.isFinite() ? fractionalInfinities.toNumber() : 0;
   }
 }
 

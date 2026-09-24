@@ -9,6 +9,7 @@ import AutomatorTab from "./automator/AutomatorTab";
 import BlackHoleTab from "./black-hole/BlackHoleTab";
 import BreakInfinityTab from "./break-infinity/BreakInfinityTab";
 import CelestialNavigationTab from "./celestial-navigation/CelestialNavigationTab";
+import DestructionDimensionsTab from "./destruction-dimensions/DestructionDimensionsTab";
 import ChallengeRecordsTab from "./challenge-records/ChallengeRecordsTab";
 import EffarigTab from "./celestial-effarig/EffarigTab";
 import EnslavedTab from "./celestial-enslaved/EnslavedTab";
@@ -51,6 +52,7 @@ const TabComponents = {
   AnnihilationMilestonesTab,
   AnnihilationPerksTab,
   InfinityDimensionsTab,
+  DestructionDimensionsTab,
   TimeDimensionsTab,
   OptionsSavingTab,
   OptionsVisualTab,

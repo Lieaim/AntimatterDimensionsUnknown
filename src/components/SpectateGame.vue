@@ -15,6 +15,10 @@ export default {
       this.endState = GameEnd.endState;
     },
     swap() {
+      if (GameEnd.isFirstAnnihilationEndingActive) {
+        GameEnd.finishFirstAnnihilationEnding();
+        return;
+      }
       GameEnd.creditsClosed = !GameEnd.creditsClosed;
       if (!GameEnd.creditsEverClosed) GameEnd.creditsEverClosed = true;
     }
