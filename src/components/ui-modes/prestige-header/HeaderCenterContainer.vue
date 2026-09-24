@@ -23,6 +23,7 @@ export default {
       isModern: false,
       hasRealityButton: false,
       isDoomed: false,
+      antimatterGainSoftcapped: false,
       antimatter: new Decimal(0),
       antimatterPerSec: new Decimal(0),
     };
@@ -35,6 +36,7 @@ export default {
       this.isModern = player.options.newUI;
       this.isDoomed = Pelle.isDoomed;
       this.antimatter.copyFrom(Currency.antimatter);
+      this.antimatterGainSoftcapped = Annihilation.isAntimatterGainSoftcapped(this.antimatter);
       this.hasRealityButton = PlayerProgress.realityUnlocked() || TimeStudy.reality.isBought;
       if (!this.hasRealityButton) this.antimatterPerSec.copyFrom(Currency.antimatter.productionPerSecond);
     },
@@ -48,6 +50,12 @@ export default {
     class="c-prestige-button-container"
   >
     <span>You have <span class="c-game-header__antimatter">{{ format(antimatter, 2, 1) }}</span> antimatter.</span>
+    <div
+      v-if="antimatterGainSoftcapped"
+      class="c-antimatter-softcap-warning"
+    >
+      Your antimatter gain is softcapped due to the limits of this realm
+    </div>
     <div
       v-if="hasRealityButton"
       class="c-reality-container"
@@ -73,5 +81,10 @@ export default {
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+}
+
+.c-antimatter-softcap-warning {
+  margin-top: 0.3rem;
+  color: #c9a853;
 }
 </style>

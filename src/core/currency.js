@@ -222,9 +222,10 @@ Currency.antimatter = new class extends DecimalCurrency {
   }
 
   add(amount) {
-    super.add(amount);
-    if (amount.gt(0)) {
-      player.records.totalAntimatter = player.records.totalAntimatter.add(amount);
+    const adjustedAmount = Annihilation.softenAntimatterGain(amount);
+    super.add(adjustedAmount);
+    if (adjustedAmount.gt(0)) {
+      player.records.totalAntimatter = player.records.totalAntimatter.add(adjustedAmount);
       player.requirementChecks.reality.noAM = false;
     }
   }

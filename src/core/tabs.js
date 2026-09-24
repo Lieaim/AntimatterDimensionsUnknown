@@ -23,7 +23,8 @@ class SubtabState {
   get isHidden() {
     if (Enslaved.isRunning || Pelle.hasGalaxyGenerator) return false;
     if (this._parent.key === "reality" && Annihilation.hasAnnihilated) return false;
-    return ((player.options.hiddenSubtabBits[this._parent.id] & (1 << this.id)) !== 0) &&
+    const hiddenBits = player.options.hiddenSubtabBits[this._parent.id] ?? 0;
+    return ((hiddenBits & (1 << this.id)) !== 0) &&
       this.hidable;
   }
 
@@ -69,7 +70,15 @@ class SubtabState {
 }
 
 function findLastOpenSubtab(tabId, subtabs) {
-  return subtabs.find(s => s.id === player.options.lastOpenSubtab[tabId]) ?? subtabs[0];
+  const lastOpenSubtab = player.options.lastOpenSubtab[tabId] ?? 0;
+  return subtabs.find(s => s.id === lastOpenSubtab) ?? subtabs[0];
+}
+
+function ensureTabStorage(tabId) {
+  // Custom tabs can have IDs added after old saves were created. Give every such
+  // tab an actual storage slot before routing to a child page.
+  if (player.options.hiddenSubtabBits[tabId] === undefined) player.options.hiddenSubtabBits[tabId] = 0;
+  if (player.options.lastOpenSubtab[tabId] === undefined) player.options.lastOpenSubtab[tabId] = 0;
 }
 
 function cycleThroughSubtabs(subtabs, currentSubtab) {
@@ -140,6 +149,7 @@ class TabState {
 
   show(manual, subtab = undefined) {
     if (!manual && !player.options.automaticTabSwitching || Quote.isOpen) return;
+    ensureTabStorage(this.id);
     if (subtab !== undefined) {
       if (!Enslaved.isRunning) subtab.unhideTab();
       this._currentSubtab = subtab;
@@ -149,6 +159,7 @@ class TabState {
       this._currentSubtab = findLastOpenSubtab(this.id, this.subtabs);
     }
 
+    if (this._currentSubtab === undefined) this._currentSubtab = this.subtabs[0];
     if (!this._currentSubtab.isUnlocked) this.resetToUnlocked();
     if (!this._currentSubtab.isAvailable) this.resetToAvailable();
 

@@ -447,7 +447,7 @@ export function gameLoop(passDiff, options = {}) {
   // In certain cases we want to allow the player to interact with the game's settings and tabs, but prevent any actual
   // resource generation from happening - in these cases, we have to make sure this all comes before the hibernation
   // check or else it'll attempt to run the game anyway
-  if (Speedrun.isPausedAtStart() || GameEnd.creditsEverClosed) {
+  if (Speedrun.isPausedAtStart() || (GameEnd.creditsEverClosed && !GameEnd.isReplacedByAnnihilation)) {
     GameUI.update();
     return;
   }

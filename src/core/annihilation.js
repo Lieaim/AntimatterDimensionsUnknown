@@ -23,7 +23,8 @@ const INFINITY_COLUMN_UPGRADES = [
 
 const INFINITY_COLUMN_COSTS = [DC.E15];
 const FIRST_ANNIHILATION_ANTIMATTER = new Decimal("9e9e15");
-const NON_DOOMED_ANTIMATTER_CAP = new Decimal("1e9e15");
+const NON_DOOMED_ANTIMATTER_CAP = new Decimal("8.99999e9e15");
+const ANTIMATTER_GAIN_SOFTCAP = new Decimal("9e9e15");
 export const BASE_ANNIHILATION_MATTER_EXPONENT = 0.7;
 
 const MATTER_MILESTONES = [
@@ -153,7 +154,10 @@ export const Annihilation = {
   },
 
   get isUnlocked() {
-    return player.annihilation.unlocked || GameEnd.creditsEverClosed;
+    // The tab becomes available at the 9ee15 threshold, but reaching that threshold
+    // does not grant an Annihilation or bypass the Doomed Reality requirement.
+    return player.annihilation.unlocked || GameEnd.creditsEverClosed ||
+      Currency.antimatter.gte(this.antimatterGainSoftcapStart);
   },
 
   get power() {
@@ -215,6 +219,10 @@ export const Annihilation = {
 
   get imaginaryMachineMultiplier() {
     return this.hasAnnihilated ? 10 : 1;
+  },
+
+  get relicShardMultiplier() {
+    return this.hasAnnihilated ? 100 : 5;
   },
 
   get perkPointMultiplier() {
@@ -283,19 +291,38 @@ export const Annihilation = {
   },
 
   get antimatterCap() {
-    // The cap holds through the entire non-doomed game, including after Annihilation.
-    // A Doomed Reality is the one place where Antimatter may progress beyond it.
     return Pelle.isDoomed ? Decimal.dSafeMax : NON_DOOMED_ANTIMATTER_CAP;
   },
 
+  get antimatterGainSoftcapStart() {
+    return ANTIMATTER_GAIN_SOFTCAP;
+  },
+
+  isAntimatterGainSoftcapped(value = Currency.antimatter.value) {
+    return value.gte(this.antimatterGainSoftcapStart);
+  },
+
+  // Each five extra orders of magnitude past 9ee15 doubles the reduction. This
+  // deliberately ramps in slowly rather than abruptly flattening Antimatter gain.
+  softenAntimatterGain(amount, currentAntimatter = Currency.antimatter.value) {
+    if (amount.lte(0)) return amount;
+    const softcapStart = this.antimatterGainSoftcapStart;
+    const uncappedGain = Decimal.max(softcapStart.minus(currentAntimatter), 0);
+    if (amount.lte(uncappedGain)) return amount;
+
+    const excessGain = amount.minus(uncappedGain);
+    const amountAtSoftcap = Decimal.max(currentAntimatter, softcapStart);
+    const extraOrders = Math.max(amountAtSoftcap.div(softcapStart).log10().toNumber(), 0);
+    const reduction = 1 + extraOrders / 5;
+    return uncappedGain.plus(excessGain.div(reduction));
+  },
+
   get resetRequirement() {
-    if (this.hasAnnihilated || Pelle.isDoomed) return MATTER_MILESTONES[0].antimatter;
-    // The non-doomed Antimatter cap must still allow the very first Annihilation.
-    return Decimal.min(this.firstResetRequirement, this.antimatterCap);
+    return MATTER_MILESTONES[0].antimatter;
   },
 
   get canReset() {
-    return this.isUnlocked && Currency.antimatter.gte(this.resetRequirement);
+    return this.isUnlocked && Pelle.isDoomed && Currency.antimatter.gte(this.resetRequirement);
   },
 
   get matterExponent() {
@@ -416,6 +443,7 @@ export const Annihilation = {
 
   reset() {
     if (!this.canReset) return false;
+    const isFirstAnnihilation = !this.hasAnnihilated && !player.annihilation.firstEndingPlayed;
     // Ultimate Destruction is awarded by the first Annihilation, so its retention reward applies immediately.
     const savedBoostAchievements = Achievements.rows(1, 13)
       .filter(achievement => achievement.isUnlocked && achievement.config.effect !== undefined)
@@ -435,6 +463,8 @@ export const Annihilation = {
       })),
       infinityColumns: [...player.annihilation.infinityColumns],
       legacyAutoAchievementsCleared: player.annihilation.legacyAutoAchievementsCleared,
+      firstEndingPlayed: player.annihilation.firstEndingPlayed ?? false,
+      firstEndingSequenceActive: false,
       unlocked: true,
     };
     GameEnd.creditsClosed = false;
@@ -455,6 +485,7 @@ export const Annihilation = {
     this.restoreInfinityUpgrades();
     GameUI.update();
     Quotes.annihilation.first.show();
+    if (isFirstAnnihilation) GameEnd.startFirstAnnihilationEnding();
     return true;
   },
 };
