@@ -65,6 +65,14 @@ export default {
           "background-size": "cover"
         };
       }
+      if (this.id === 196) {
+        return {
+          "background-image": "url('/images/achievement-wait-do-i-know-you.png')",
+          "--achievement-custom-background": "url('/images/achievement-wait-do-i-know-you.png')",
+          "background-position": "center",
+          "background-size": "cover"
+        };
+      }
       return {
         "background-position": `-${(this.achievement.column - 1) * 104}px -${(this.achievement.row - 1) * 104}px`
       };
@@ -77,6 +85,8 @@ export default {
         "o-achievement--unlocked": this.isUnlocked,
         "o-achievement--waiting": !this.isUnlocked && this.isPreRealityAchievement && !this.isDisabled,
         "o-achievement--blink": !this.isUnlocked && this.id === 78 && !this.isDisabled,
+        // Keep this image visible even while this endgame achievement is still obscured.
+        "o-achievement--custom-196": this.id === 196,
         "o-achievement--normal": !this.isCancer && !this.isObscured,
         "o-achievement--cancer": this.isCancer && !this.isObscured,
         "o-achievement--hidden": this.isObscured,
@@ -202,9 +212,12 @@ export default {
     @mouseleave="onMouseLeave"
   >
     <div
-      v-if="id === 191 || id === 192"
+      v-if="[191, 192, 193, 196].includes(id)"
       class="o-achievement__custom-title"
-      :class="{ 'o-achievement__custom-title--long': id === 192 }"
+      :class="{
+        'o-achievement__custom-title--long': [192, 193, 196].includes(id),
+        'o-achievement__custom-title--dark': id === 196
+      }"
     >
       {{ config.name }}
     </div>
@@ -283,6 +296,18 @@ export default {
 
 .o-achievement__custom-title--long {
   font-size: 0.72rem;
+}
+
+.o-achievement__custom-title--dark {
+  color: #261900;
+  text-shadow: 0 0 0.25rem #fff, 0.1rem 0.1rem 0.2rem #fff;
+}
+
+/* This deliberately overrides the generic and hidden-achievement sprites. */
+.o-achievement--custom-196 {
+  background-image: var(--achievement-custom-background) !important;
+  background-position: center !important;
+  background-size: cover !important;
 }
 
 .o-achievement--disabled {

@@ -31,11 +31,14 @@ class AlchemyResourceState extends GameMechanicState {
   }
 
   get amount() {
-    return this.data.amount;
+    const amount = this.data.amount;
+    if (Number.isFinite(amount) && amount >= 0) return amount;
+    this.data.amount = 0;
+    return 0;
   }
 
   set amount(value) {
-    this.data.amount = value;
+    this.data.amount = Number.isFinite(value) ? Math.max(value, 0) : 0;
   }
 
   get before() {
@@ -107,11 +110,15 @@ class BasicAlchemyResourceState extends AlchemyResourceState {
   }
 
   get highestRefinementValue() {
-    return player.celestials.ra.highestRefinementValue[this._name];
+    const value = player.celestials.ra.highestRefinementValue[this._name];
+    if (Number.isFinite(value) && value >= 0) return value;
+    player.celestials.ra.highestRefinementValue[this._name] = 0;
+    return 0;
   }
 
   set highestRefinementValue(value) {
-    player.celestials.ra.highestRefinementValue[this._name] = Math.max(this.highestRefinementValue, value);
+    const safeValue = Number.isFinite(value) ? Math.max(value, 0) : 0;
+    player.celestials.ra.highestRefinementValue[this._name] = Math.max(this.highestRefinementValue, safeValue);
   }
 
   get cap() {

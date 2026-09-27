@@ -2,6 +2,8 @@
 export const GlyphSacrificeHandler = {
   // Anything scaling on sacrifice caps at this value, even though the actual sacrifice values can go higher
   maxSacrificeForEffects: 1e100,
+  maxRefinableGlyphLevel: 1e40,
+  maxRefinementValue: 1e120,
   // This is used for glyph UI-related things in a few places, but is handled here as a getter which is only called
   // sparingly - that is, whenever the cache is invalidated after a glyph is sacrificed. Thus it only gets recalculated
   // when glyphs are actually sacrificed, rather than every render cycle.
@@ -70,7 +72,9 @@ export const GlyphSacrificeHandler = {
   },
   // Scaling function to make refinement value ramp up with higher glyph levels
   levelRefinementValue(level) {
-    return Math.pow(level, 3) / 1e8;
+    const safeLevel = Number.isFinite(level) ? Math.clamp(level, 0, this.maxRefinableGlyphLevel)
+      : this.maxRefinableGlyphLevel;
+    return Math.min(Math.pow(safeLevel, 3) / 1e8, this.maxRefinementValue);
   },
   // Refined glyphs give this proportion of their maximum attainable value from their level
   glyphRefinementEfficiency: 0.05,
@@ -78,7 +82,9 @@ export const GlyphSacrificeHandler = {
     if (!Ra.unlocks.unlockGlyphAlchemy.canBeApplied) return 0;
     const glyphMaxValue = this.levelRefinementValue(glyph.level);
     const rarityModifier = strengthToRarity(glyph.strength) / 100;
-    return this.glyphRefinementEfficiency * glyphMaxValue * rarityModifier * Annihilation.glyphRefinementMultiplier;
+    const gain = this.glyphRefinementEfficiency * glyphMaxValue * rarityModifier *
+      Annihilation.glyphRefinementMultiplier;
+    return Number.isFinite(gain) ? Math.min(gain, this.maxRefinementValue) : this.maxRefinementValue;
   },
   glyphRefinementGain(glyph) {
     if (!Ra.unlocks.unlockGlyphAlchemy.canBeApplied || !generatedTypes.includes(glyph.type)) return 0;

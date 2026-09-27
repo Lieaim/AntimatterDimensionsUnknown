@@ -305,13 +305,15 @@ export const Annihilation = {
   // Each five extra orders of magnitude past 9ee15 doubles the reduction. This
   // deliberately ramps in slowly rather than abruptly flattening Antimatter gain.
   softenAntimatterGain(amount, currentAntimatter = Currency.antimatter.value) {
-    if (amount.lte(0)) return amount;
+    const safeAmount = Decimal.isFinite(amount) ? amount : this.antimatterCap;
+    const safeCurrentAntimatter = Decimal.isFinite(currentAntimatter) ? currentAntimatter : this.antimatterCap;
+    if (safeAmount.lte(0)) return safeAmount;
     const softcapStart = this.antimatterGainSoftcapStart;
-    const uncappedGain = Decimal.max(softcapStart.minus(currentAntimatter), 0);
-    if (amount.lte(uncappedGain)) return amount;
+    const uncappedGain = Decimal.max(softcapStart.minus(safeCurrentAntimatter), 0);
+    if (safeAmount.lte(uncappedGain)) return safeAmount;
 
-    const excessGain = amount.minus(uncappedGain);
-    const amountAtSoftcap = Decimal.max(currentAntimatter, softcapStart);
+    const excessGain = safeAmount.minus(uncappedGain);
+    const amountAtSoftcap = Decimal.max(safeCurrentAntimatter, softcapStart);
     const extraOrders = Math.max(amountAtSoftcap.div(softcapStart).log10().toNumber(), 0);
     const reduction = 1 + extraOrders / 5;
     return uncappedGain.plus(excessGain.div(reduction));

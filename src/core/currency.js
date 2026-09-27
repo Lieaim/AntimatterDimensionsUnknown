@@ -197,10 +197,16 @@ class DecimalCurrency extends Currency {
 window.DecimalCurrency = DecimalCurrency;
 
 Currency.antimatter = new class extends DecimalCurrency {
-  get value() { return player.antimatter; }
+  get value() {
+    // A legacy save or an extreme intermediate calculation can contain eInfinite. Keep that
+    // invalid value from spreading into production, records, or the Annihilation UI.
+    if (!Decimal.isFinite(player.antimatter)) player.antimatter = Annihilation.antimatterCap;
+    return player.antimatter;
+  }
 
   set value(value) {
-    const cappedValue = Decimal.min(value, Annihilation.antimatterCap);
+    const safeValue = Decimal.isFinite(value) ? value : Annihilation.antimatterCap;
+    const cappedValue = Decimal.min(safeValue, Annihilation.antimatterCap);
     if (InfinityChallenges.nextIC) InfinityChallenges.notifyICUnlock(cappedValue);
     if (GameCache.cheapestAntimatterAutobuyer.value &&
       cappedValue.gte(GameCache.cheapestAntimatterAutobuyer.value)
@@ -222,7 +228,8 @@ Currency.antimatter = new class extends DecimalCurrency {
   }
 
   add(amount) {
-    const adjustedAmount = Annihilation.softenAntimatterGain(amount);
+    const safeAmount = Decimal.isFinite(amount) ? amount : Annihilation.antimatterCap;
+    const adjustedAmount = Annihilation.softenAntimatterGain(safeAmount);
     super.add(adjustedAmount);
     if (adjustedAmount.gt(0)) {
       player.records.totalAntimatter = player.records.totalAntimatter.add(adjustedAmount);
