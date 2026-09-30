@@ -1,0 +1,34 @@
+name: Deploy main
+
+env:
+  FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Deploy 🚀
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          # The lockfile uses npm's v3 format, which Node 14's bundled npm
+          # cannot read. Use a current LTS release so `npm ci` can install it.
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build:master
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: dist
+          single-commit: true
