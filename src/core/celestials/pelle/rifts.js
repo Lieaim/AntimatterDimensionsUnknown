@@ -93,10 +93,17 @@ class RiftState extends GameMechanicState {
     return this.rift.percentageSpent || 0;
   }
 
+  get maxFillPercentage() {
+    return Annihilation.pelleRiftFillPercentage;
+  }
+
   get percentage() {
-    if (this.reducedTo > 1) return this.reducedTo;
-    if (!this.config.spendable) return Math.min(this.realPercentage, this.reducedTo);
-    return Math.min(this.config.percentage(this.totalFill) - this.spentPercentage, this.reducedTo);
+    const effectivePercentage = this.config.spendable
+      ? this.realPercentage - this.spentPercentage
+      : this.realPercentage;
+    const reducedPercentage = this.reducedTo > 1 ? this.reducedTo : effectivePercentage;
+    const cap = this.reducedTo < 1 ? this.reducedTo : this.maxFillPercentage;
+    return Math.min(Math.max(effectivePercentage, reducedPercentage), cap);
   }
 
   get milestones() {
@@ -124,11 +131,11 @@ class RiftState extends GameMechanicState {
   }
 
   get maxValue() {
-    return this.config.percentageToFill(1 + this.spentPercentage);
+    return this.config.percentageToFill(this.maxFillPercentage + this.spentPercentage);
   }
 
   get isMaxed() {
-    return this.percentage >= 1;
+    return this.percentage >= this.maxFillPercentage;
   }
 
   get galaxyGeneratorText() {

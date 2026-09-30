@@ -31,6 +31,11 @@ export default {
         "border-color": "var(--color-text)",
       };
     },
+    requirement() {
+      return typeof this.dbEntry.requirement === "function"
+        ? this.dbEntry.requirement()
+        : this.dbEntry.requirement;
+    },
   },
   methods: {
     update() {
@@ -50,6 +55,6 @@ export default {
       class="c-v-unlock-bar__progress"
       :style="barProgressStyle"
     />
-    {{ dbEntry.format(resource) }} / {{ dbEntry.format(dbEntry.requirement) }} {{ dbEntry.name }}
+    {{ dbEntry.format(resource) }} / {{ dbEntry.format(requirement) }} {{ dbEntry.name }}
   </div>
 </template>

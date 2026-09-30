@@ -124,9 +124,9 @@ class RaPetState extends GameMechanicState {
   get memoryChunksPerSecond() {
     if (!this.canGetMemoryChunks) return 0;
     let res = this.rawMemoryChunksPerSecond * this.chunkUpgradeCurrentMult *
-      Effects.product(Ra.unlocks.continuousTTBoost.effects.memoryChunks, GlyphSacrifice.reality);
+      Effects.product(Ra.unlocks.continuousTTBoost.effects.memoryChunks, GlyphSacrifice.reality) *
+      Annihilation.raMemoryMultiplier;
     if (this.hasRemembrance) res *= Ra.remembrance.multiplier;
-    else if (Ra.petWithRemembrance) res *= Ra.remembrance.nerf;
     return res;
   }
 
@@ -231,8 +231,7 @@ export const Ra = {
   unlocks,
   pets,
   remembrance: {
-    multiplier: 5,
-    nerf: 0.5,
+    multiplier: 10,
     requiredLevels: 20,
     get isUnlocked() {
       return Ra.totalPetLevel >= this.requiredLevels;
@@ -253,7 +252,8 @@ export const Ra = {
     for (const pet of Ra.pets.all) pet.tick(realDiff, generateChunks);
   },
   get productionPerMemoryChunk() {
-    let res = Effects.product(Ra.unlocks.continuousTTBoost.effects.memories, Achievement(168));
+    let res = Effects.product(Ra.unlocks.continuousTTBoost.effects.memories, Achievement(168)) *
+      Annihilation.raMemoryMultiplier;
     for (const pet of Ra.pets.all) {
       if (pet.isUnlocked) res *= pet.memoryProductionMultiplier;
     }
@@ -266,6 +266,7 @@ export const Ra = {
     }
     if (Achievement(168).isUnlocked) boostList.push("Achievement 168");
     if (Ra.unlocks.continuousTTBoost.canBeApplied) boostList.push("current TT");
+    if (Annihilation.raMemoryMultiplier !== 1) boostList.push("Annihilation");
 
     if (boostList.length === 1) return `${boostList[0]}`;
     if (boostList.length === 2) return `${boostList[0]} and ${boostList[1]}`;

@@ -2,6 +2,16 @@ import { DC } from "../constants";
 
 import { DimensionState } from "./dimension";
 
+const TIME_DIMENSION_OVERFLOW_LIMIT = new Decimal("1e1e100");
+const NON_DOOMED_TIME_DIMENSION_CAP = new Decimal("1e100000000");
+
+function cappedTimeDimensionMultiplier(value) {
+  if (!Decimal.isFinite(value)) return DC.D1;
+  return Pelle.isDoomed
+    ? value.clampMax(Decimal.dSafeMax)
+    : value.clampMax(NON_DOOMED_TIME_DIMENSION_CAP);
+}
+
 export function buySingleTimeDimension(tier, auto = false) {
   const dim = TimeDimension(tier);
   if (tier > 4) {
@@ -21,7 +31,8 @@ export function buySingleTimeDimension(tier, auto = false) {
     return false;
   }
 
-  Currency.eternityPoints.subtract(dim.cost);
+  // EP-priced Time Dimensions use EP as an unlock requirement; purchasing them does
+  // not spend the player's current Eternity Points.
   dim.amount = dim.amount.plus(1);
   dim.bought += 1;
   dim.cost = dim.nextCost(dim.bought);
@@ -49,7 +60,8 @@ export function toggleAllTimeDims() {
 }
 
 export function buyMaxTimeDimension(tier, portionToSpend = 1, isMaxAll = false) {
-  const canSpend = Currency.eternityPoints.value.times(portionToSpend);
+  // No EP is spent on Time Dimensions, so every max-buy may use the whole amount.
+  const canSpend = Currency.eternityPoints.value.times(Math.max(portionToSpend, 1));
   const dim = TimeDimension(tier);
   if (canSpend.lt(dim.cost)) return false;
   if (tier > 4) {
@@ -69,11 +81,10 @@ export function buyMaxTimeDimension(tier, portionToSpend = 1, isMaxAll = false) 
   if (Enslaved.isRunning) return buySingleTimeDimension(tier);
   const bulk = bulkBuyBinarySearch(canSpend, {
     costFunction: bought => dim.nextCost(bought),
-    cumulative: true,
+    cumulative: false,
     firstCost: dim.cost,
   }, dim.bought);
   if (!bulk) return false;
-  Currency.eternityPoints.subtract(bulk.purchasePrice);
   dim.amount = dim.amount.plus(bulk.quantity);
   dim.bought += bulk.quantity;
   dim.cost = dim.nextCost(dim.bought);
@@ -128,7 +139,9 @@ export function timeDimensionCommonMultiplier() {
         4)
         .clampMin(1));
   }
-  return mult;
+  // A late-game modifier can occasionally evaluate outside Decimal's finite range. Treat an invalid
+  // aggregate multiplier as neutral so it cannot poison Time Dimension production.
+  return Decimal.isFinite(mult) ? mult.clampMax(Decimal.dSafeMax) : DC.D1;
 }
 
 export function updateTimeDimensionCosts() {
@@ -158,6 +171,14 @@ class TimeDimensionState extends DimensionState {
 
   /** @param {Decimal} value */
   set cost(value) { this.data.cost = value; }
+
+  get amount() {
+    return this.data.amount;
+  }
+
+  set amount(value) {
+    this.data.amount = Pelle.isDoomed ? value : Decimal.min(value, NON_DOOMED_TIME_DIMENSION_CAP);
+  }
 
   nextCost(bought) {
     if (this._tier > 4 && bought < this.e6000ScalingAmount) {
@@ -200,7 +221,9 @@ class TimeDimensionState extends DimensionState {
   get multiplier() {
     const tier = this._tier;
 
-    if (EternityChallenge(11).isRunning) return new Decimal(Annihilation.dimensionPlaytimeMultiplier);
+    if (EternityChallenge(11).isRunning) {
+      return cappedTimeDimensionMultiplier(new Decimal(Annihilation.dimensionPlaytimeMultiplier));
+    }
     let mult = GameCache.timeDimensionCommonMultiplier.value
       .timesEffectsOf(
         tier === 1 ? TimeStudy(11) : null,
@@ -230,7 +253,8 @@ class TimeDimensionState extends DimensionState {
       mult = mult.pow(0.5);
     }
 
-    return mult.times(Annihilation.dimensionPlaytimeMultiplier);
+    const finalMultiplier = mult.times(Annihilation.dimensionPlaytimeMultiplier);
+    return cappedTimeDimensionMultiplier(finalMultiplier);
   }
 
   get productionPerSecond() {
@@ -248,7 +272,7 @@ class TimeDimensionState extends DimensionState {
     if (this._tier === 1 && !EternityChallenge(7).isRunning) {
       production = production.pow(getAdjustedGlyphEffect("timeshardpow"));
     }
-    return production;
+    return Decimal.isFinite(production) ? production.clampMax(Decimal.dSafeMax) : DC.D0;
   }
 
   get rateOfChange() {
@@ -322,6 +346,40 @@ export const TimeDimensions = {
   },
 
   tick(diff) {
+    if (!Pelle.isDoomed) {
+      for (const dimension of this.all) {
+        if (dimension.amount.gt(NON_DOOMED_TIME_DIMENSION_CAP)) {
+          dimension.amount = NON_DOOMED_TIME_DIMENSION_CAP;
+        }
+      }
+    }
+
+    // Repair the one-time overflow caused by old eInfinite Time Dimension production. Keep purchased
+    // dimensions, but clear the derived Time Shards and free tickspeed upgrades that formed its feedback loop.
+    const needsOverflowRecovery = !player.annihilation.timeDimensionOverflowRecovered && (
+      !Number.isFinite(player.totalTickGained) || player.totalTickGained > 1e100 ||
+      Currency.timeShards.gte(TIME_DIMENSION_OVERFLOW_LIMIT) ||
+      this.all.some(dimension =>
+        !Decimal.isFinite(dimension.amount) || dimension.amount.gte(TIME_DIMENSION_OVERFLOW_LIMIT))
+    );
+    if (needsOverflowRecovery) {
+      for (const dimension of this.all) {
+        const bought = Number.isFinite(dimension.bought) ? Math.max(dimension.bought, 0) : 0;
+        dimension.amount = new Decimal(bought);
+      }
+      Currency.timeShards.reset();
+      player.totalTickGained = 0;
+      player.annihilation.timeDimensionOverflowRecovered = true;
+    }
+
+    // Recover legacy overflowed Time Dimension amounts without resetting legitimate purchases.
+    // This also prevents an old eInfinite value from cascading down through every lower tier.
+    for (const dimension of this.all) {
+      if (Decimal.isFinite(dimension.amount) && dimension.amount.gte(0)) continue;
+      const bought = Number.isFinite(dimension.bought) ? Math.max(dimension.bought, 0) : 0;
+      dimension.amount = new Decimal(bought);
+    }
+
     for (let tier = 8; tier > 1; tier--) {
       TimeDimension(tier).produceDimensions(TimeDimension(tier - 1), diff / 10);
     }
@@ -333,7 +391,9 @@ export const TimeDimensions = {
     }
 
     EternityChallenge(7).reward.applyEffect(production => {
-      InfinityDimension(8).amount = InfinityDimension(8).amount.plus(production.times(diff / 1000));
+      const producedInfinityDimensions = production.times(diff / 1000);
+      if (!Decimal.isFinite(producedInfinityDimensions)) return;
+      InfinityDimension(8).amount = InfinityDimension(8).amount.plus(producedInfinityDimensions);
     });
   }
 };

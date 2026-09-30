@@ -12,7 +12,8 @@ export class DilationUpgradeAutobuyerState extends IntervaledAutobuyerState {
   }
 
   get interval() {
-    const annihilationSpeed = (Annihilation.hasAnnihilated ? 5 : 2) * (Annihilation.isPerkBought(4) ? 5 : 1);
+    const annihilationSpeed = (Annihilation.hasAnnihilated ? 5 : 2) *
+      (Annihilation.isPerkBought(4) ? 5 : 1) * Annihilation.repeatableDilationUpgradeAutobuyerSpeedMultiplier;
     return 1000 * Perk.autobuyerFasterDilation.effectOrDefault(1) /
       (PerkShopUpgrade.autoSpeed.effectOrDefault(1) * annihilationSpeed);
   }

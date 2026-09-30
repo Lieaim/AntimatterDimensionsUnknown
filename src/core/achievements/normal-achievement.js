@@ -139,7 +139,7 @@ export const Achievements = {
   },
 
   get gameSpeedMultiplier() {
-    return Math.pow(2, Achievements.completedRows);
+    return Math.pow(2, Achievements.completedRows) * Achievement(194).effectOrDefault(1);
   },
 
   get period() {

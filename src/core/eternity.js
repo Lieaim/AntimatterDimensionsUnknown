@@ -259,13 +259,28 @@ class EternityUpgradeState extends SetPurchasableMechanicState {
   get set() {
     return player.eternityUpgrades;
   }
+
+  purchase() {
+    if (!this.canBeBought) return false;
+    // EP is a requirement for Eternity upgrades, not a resource consumed by them.
+    this.isBought = true;
+    this.onPurchased();
+    GameUI.update();
+    return true;
+  }
 }
 
 class EPMultiplierState extends GameMechanicState {
   constructor() {
     super({});
     this.cachedCost = new Lazy(() => this.costAfterCount(player.epmultUpgrades));
-    this.cachedEffectValue = new Lazy(() => DC.D5.pow(player.epmultUpgrades));
+    this.cachedEffectValue = new Lazy(() => {
+      const effect = DC.D5.pow(this.boughtAmount);
+      // A bulk purchase count can be far larger than a normal JavaScript integer. Keep
+      // its resulting multiplier in the Decimal range instead of allowing eInfinite to
+      // poison every Eternity reward calculation.
+      return Decimal.isFinite(effect) ? effect.clampMax(Decimal.dSafeMax) : Decimal.dSafeMax;
+    });
   }
 
   get isAffordable() {
@@ -277,17 +292,27 @@ class EPMultiplierState extends GameMechanicState {
   }
 
   get boughtAmount() {
+    // Old overflowed saves may have an invalid count here. It is a Number rather than
+    // a Decimal, so repair it before it is used by cost or reward formulas.
+    if (!Number.isFinite(player.epmultUpgrades) || player.epmultUpgrades < 0) {
+      player.epmultUpgrades = 0;
+    }
     return player.epmultUpgrades;
   }
 
   set boughtAmount(value) {
     // Reality resets will make this bump amount negative, causing it to visually appear as 0 even when it isn't.
     // A dev migration fixes bad autobuyer states and this change ensures it doesn't happen again
-    const diff = Math.clampMin(value - player.epmultUpgrades, 0);
-    player.epmultUpgrades = value;
+    const oldAmount = this.boughtAmount;
+    const safeValue = Number.isFinite(value) ? Math.clampMin(value, 0) : oldAmount;
+    const diff = Math.clampMin(safeValue - oldAmount, 0);
+    player.epmultUpgrades = safeValue;
     this.cachedCost.invalidate();
     this.cachedEffectValue.invalidate();
-    Autobuyer.eternity.bumpAmount(DC.D5.pow(diff));
+    const autobuyerBump = DC.D5.pow(diff);
+    Autobuyer.eternity.bumpAmount(
+      Decimal.isFinite(autobuyerBump) ? autobuyerBump.clampMax(Decimal.dSafeMax) : Decimal.dSafeMax
+    );
   }
 
   get isCustomEffect() {
@@ -300,7 +325,6 @@ class EPMultiplierState extends GameMechanicState {
 
   purchase() {
     if (!this.isAffordable) return false;
-    Currency.eternityPoints.subtract(this.cost);
     ++this.boughtAmount;
     return true;
   }
@@ -313,11 +337,10 @@ class EPMultiplierState extends GameMechanicState {
     }
     const bulk = bulkBuyBinarySearch(Currency.eternityPoints.value, {
       costFunction: this.costAfterCount,
-      cumulative: true,
+      cumulative: false,
       firstCost: this.cost,
     }, this.boughtAmount);
     if (!bulk) return false;
-    Currency.eternityPoints.subtract(bulk.purchasePrice);
     this.boughtAmount += bulk.quantity;
     return true;
   }
@@ -331,13 +354,17 @@ class EPMultiplierState extends GameMechanicState {
   }
 
   costAfterCount(count) {
+    if (!Number.isFinite(count) || count < 0) return Decimal.dSafeMax;
     const costThresholds = EternityUpgrade.epMult.costIncreaseThresholds;
     const multPerUpgrade = [50, 100, 500, 1000];
     for (let i = 0; i < costThresholds.length; i++) {
       const cost = Decimal.pow(multPerUpgrade[i], count).times(500);
+      if (!Decimal.isFinite(cost)) return Decimal.dSafeMax;
       if (cost.lt(costThresholds[i])) return cost;
     }
-    return DC.E3.pow(count + Math.pow(Math.clampMin(count - 1334, 0), 1.2)).times(500);
+    const scaledCount = count + Math.pow(Math.clampMin(count - 1334, 0), 1.2);
+    const cost = DC.E3.pow(scaledCount).times(500);
+    return Decimal.isFinite(cost) ? cost.clampMax(Decimal.dSafeMax) : Decimal.dSafeMax;
   }
 }
 

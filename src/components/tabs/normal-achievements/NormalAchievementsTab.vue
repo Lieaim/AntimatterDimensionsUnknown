@@ -124,7 +124,9 @@ export default {
       return this.renderedRowIndices.includes(row);
     },
     isObscured(row) {
-      return this.isDoomed ? false : row === 17 && !Annihilation.hasAnnihilated;
+      // Rows are rendered in a dynamic order, so their visual index is not their actual achievement row.
+      // Check the achievement IDs themselves to keep the whole post-Annihilation row unknown until earned.
+      return !Annihilation.hasAnnihilated && row.some(achievement => achievement.id >= 191 && achievement.id <= 198);
     },
     timeDisplay,
     timeDisplayNoDecimals,
@@ -187,7 +189,7 @@ export default {
         v-for="(row, i) in renderedRows"
         :key="i"
         :row="row"
-        :is-obscured="isObscured(i)"
+        :is-obscured="isObscured(row)"
       />
     </div>
   </div>

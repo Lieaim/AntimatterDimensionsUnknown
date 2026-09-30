@@ -1411,10 +1411,12 @@ export const normalAchievements = [
   },
   {
     id: 194,
-    name: "Unwritten Future",
-    description: "A future Annihilation achievement.",
-    checkRequirement: () => false,
+    name: "infinite time",
+    description: "Reach a 1.79e308 game speed multiplier.",
+    checkRequirement: () => Annihilation.hasAnnihilated && getGameSpeedupFactor() >= 1.79e308,
     checkEvent: GAME_EVENT.GAME_TICK_AFTER,
+    reward: "Game speed is multiplied by 1e10.",
+    effect: 1e10,
   },
   {
     id: 195,

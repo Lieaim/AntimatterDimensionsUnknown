@@ -491,9 +491,7 @@ export const tabs = [
     key: "annihilation",
     name: "Annihilation",
     UIClass: "o-tab-btn--annihilation",
-    // Keep the page visible from the start; its own reset button explains the
-    // Doomed Reality requirement. This avoids a mid-run parent-tab unlock.
-    condition: () => true,
+    condition: () => Annihilation.isUnlocked,
     id: 11,
     hidable: true,
     subtabs: [

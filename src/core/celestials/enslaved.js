@@ -87,7 +87,7 @@ export const Enslaved = {
     if (Pelle.isDoomed) return;
     const thisUpdate = Date.now();
     const diff = Math.max(thisUpdate - player.lastUpdate, 0);
-    const efficiency = this.storedRealTimeEfficiency;
+    const efficiency = this.storedRealTimeEfficiency * Annihilation.storedRealTimeMultiplier;
     const maxTime = this.storedRealTimeCap;
     player.celestials.enslaved.storedReal += diff * efficiency;
     if (player.celestials.enslaved.storedReal > maxTime) {
@@ -100,8 +100,9 @@ export const Enslaved = {
   },
   autoStoreRealTime(diffMs) {
     const maxGain = this.storedRealTimeCap - player.celestials.enslaved.storedReal;
-    const used = Math.min(diffMs, Math.max(0, maxGain / this.storedRealTimeEfficiency));
-    player.celestials.enslaved.storedReal += used * this.storedRealTimeEfficiency;
+    const efficiency = this.storedRealTimeEfficiency * Annihilation.storedRealTimeMultiplier;
+    const used = Math.min(diffMs, Math.max(0, maxGain / efficiency));
+    player.celestials.enslaved.storedReal += used * efficiency;
     player.lastUpdate += used;
     return diffMs - used;
   },
@@ -320,7 +321,7 @@ export const Tesseracts = {
 
   capIncrease(count = this.bought) {
     const totalCount = count * SingularityMilestone.tesseractMultFromSingularities.effectOrDefault(1);
-    const base = totalCount < 1 ? 0 : 250e3 * Math.pow(2, totalCount);
+    const base = totalCount < 1 ? 0 : 250e3 * Math.pow(Annihilation.tesseractEffectBase, totalCount);
     return base * (AlchemyResource.boundless.effectValue + 1);
   },
 

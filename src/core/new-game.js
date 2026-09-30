@@ -1,5 +1,26 @@
 import * as ADNotations from "adnot-beport-small";
 
+// The post-Pelle layer lives after the ordinary ending. A full-game completion
+// normally calls hardReset(), so take a proper copy of this layer before that
+// reset instead of making players erase the progress required to use it.
+function copyAnnihilationProgress() {
+  const source = player.annihilation;
+  return {
+    ...source,
+    matter: new Decimal(source.matter),
+    destructionPower: new Decimal(source.destructionPower ?? 0),
+    perks: [...(source.perks ?? [])],
+    dimensions: [...(source.dimensions ?? [])],
+    destructionDimensions: (source.destructionDimensions ?? []).map(dimension => ({
+      ...dimension,
+      amount: new Decimal(dimension.amount),
+      cost: new Decimal(dimension.cost),
+    })),
+    infinityColumns: [...(source.infinityColumns ?? [])],
+    unlocked: true,
+  };
+}
+
 export const NG = {
   startNewGame() {
     GameEnd.creditsClosed = false;
@@ -35,7 +56,11 @@ export const NG = {
     // Modify beaten-game quantities before doing a carryover reset
     player.records.fullGameCompletions++;
     GlyphAppearanceHandler.unlockSet();
+    const annihilationProgress = copyAnnihilationProgress();
     this.restartWithCarryover();
+    player.annihilation = annihilationProgress;
+    Annihilation.restoreInfinityUpgrades();
+    GameCache.antimatterDimensionFinalMultipliers.invalidate();
 
     // The ending animation ends at 12.5, although the value continues to increase after that. We set it to a bit above
     // 12.5 when we start the rollback animation to hide some of the unavoidable lag from all the reset functions

@@ -44,6 +44,7 @@ import PurgeGlyphModal from "@/components/modals/glyph-management/PurgeGlyphModa
 import RefineGlyphModal from "@/components/modals/glyph-management/RefineGlyphModal";
 import SacrificeGlyphModal from "@/components/modals/glyph-management/SacrificeGlyphModal";
 
+import AnnihilationBoostsModal from "@/components/modals/AnnihilationBoostsModal";
 import AutobuyerEditModal from "@/components/modals/AutobuyerEditModal";
 import AutomatorScriptTemplate from "@/components/modals/AutomatorScriptTemplate";
 import AwayProgressModal from "@/components/modals/AwayProgressModal";
@@ -267,6 +268,7 @@ Modal.shop = new Modal(StdStoreModal);
 Modal.studyString = new Modal(StudyStringModal);
 Modal.singularityMilestones = new Modal(SingularityMilestonesModal);
 Modal.pelleEffects = new Modal(PelleEffectsModal);
+Modal.annihilationBoosts = new Modal(AnnihilationBoostsModal);
 Modal.sacrifice = new Modal(SacrificeModal, 1, GAME_EVENT.DIMBOOST_AFTER);
 Modal.breakInfinity = new Modal(BreakInfinityModal, 1, GAME_EVENT.ETERNITY_RESET_AFTER);
 Modal.respecIAP = new Modal(RespecIAPModal);

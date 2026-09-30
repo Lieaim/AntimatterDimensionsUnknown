@@ -1,5 +1,20 @@
 import { DC } from "./constants";
 
+function safeSacrificeValue(value, minimum = DC.D0) {
+  if (!Decimal.isFinite(value)) return Decimal.dSafeMax;
+  if (value.lte(0)) return value.clampMin(minimum);
+  // Decimal can represent multi-layer values, but this legacy sacrifice formula
+  // converts log10 to a Number. Keep the stored value inside that formula's range.
+  const logValue = value.log10();
+  if (!Decimal.isFinite(logValue) || !Number.isFinite(logValue.toNumber())) return Decimal.dSafeMax;
+  return value.clampMin(minimum).clampMax(Decimal.dSafeMax);
+}
+
+function safeSacrificeBoost(value) {
+  const safeValue = safeSacrificeValue(value, DC.D1);
+  return safeValue.clampMax(Decimal.dSafeMax);
+}
+
 export class Sacrifice {
   // This is tied to the "buying an 8th dimension" achievement in order to hide it from new players before they reach
   // sacrifice for the first time.
@@ -72,7 +87,9 @@ export class Sacrifice {
   static get nextBoost() {
     const nd1Amount = AntimatterDimension(1).amount;
     if (nd1Amount.eq(0)) return DC.D1;
-    const sacrificed = player.sacrificed.clampMin(1);
+    const safeSacrificed = safeSacrificeValue(player.sacrificed);
+    if (!player.sacrificed.eq(safeSacrificed)) player.sacrificed = safeSacrificed;
+    const sacrificed = safeSacrificed.clampMin(1);
     let prePowerSacrificeMult;
     // Pre-reality update C8 works really weirdly - every sacrifice, the current sacrifice multiplier gets applied to
     // ND8, then sacrificed amount is updated, and then the updated sacrifice multiplier then gets applied to a
@@ -84,29 +101,34 @@ export class Sacrifice {
     } else if (InfinityChallenge(2).isCompleted) {
       prePowerSacrificeMult = nd1Amount.dividedBy(sacrificed);
     } else {
-      prePowerSacrificeMult = new Decimal((nd1Amount.log10().toNumber() / 10) / Math.max(sacrificed.log10().toNumber() / 10, 1));
+      const sacrificedLog = sacrificed.log10().dividedBy(10).clampMin(1);
+      prePowerSacrificeMult = nd1Amount.log10().dividedBy(10).dividedBy(sacrificedLog);
     }
 
-    return prePowerSacrificeMult.clampMin(1).pow(this.sacrificeExponent);
+    return safeSacrificeBoost(prePowerSacrificeMult.clampMin(1).pow(this.sacrificeExponent));
   }
 
   static get totalBoost() {
-    if (player.sacrificed.eq(0)) return DC.D1;
+    const safeSacrificed = safeSacrificeValue(player.sacrificed);
+    if (!player.sacrificed.eq(safeSacrificed)) player.sacrificed = safeSacrificed;
+    if (safeSacrificed.eq(0)) return DC.D1;
     // C8 uses a variable that keeps track of a sacrifice boost that persists across sacrifice-resets and isn't
     // used anywhere else, which also naturally takes account of the exponent from achievements and time studies.
     if (NormalChallenge(8).isRunning) {
-      return player.chall8TotalSacrifice;
+      const safeChallengeBoost = safeSacrificeBoost(player.chall8TotalSacrifice);
+      if (!player.chall8TotalSacrifice.eq(safeChallengeBoost)) player.chall8TotalSacrifice = safeChallengeBoost;
+      return safeChallengeBoost;
     }
 
     let prePowerBoost;
 
     if (InfinityChallenge(2).isCompleted) {
-      prePowerBoost = player.sacrificed;
+      prePowerBoost = safeSacrificed;
     } else {
-      prePowerBoost = new Decimal(player.sacrificed.log10().toNumber() / 10);
+      prePowerBoost = safeSacrificed.log10().dividedBy(10);
     }
 
-    return prePowerBoost.clampMin(1).pow(this.sacrificeExponent);
+    return safeSacrificeBoost(prePowerBoost.clampMin(1).pow(this.sacrificeExponent));
   }
 }
 
@@ -122,8 +144,8 @@ export function sacrificeReset() {
   }
   EventHub.dispatch(GAME_EVENT.SACRIFICE_RESET_BEFORE);
   const nextBoost = Sacrifice.nextBoost;
-  player.chall8TotalSacrifice = player.chall8TotalSacrifice.times(nextBoost);
-  player.sacrificed = player.sacrificed.plus(AntimatterDimension(1).amount);
+  player.chall8TotalSacrifice = safeSacrificeBoost(player.chall8TotalSacrifice.times(nextBoost));
+  player.sacrificed = safeSacrificeValue(player.sacrificed.plus(AntimatterDimension(1).amount));
   const isAch118Unlocked = Achievement(118).canBeApplied;
   if (NormalChallenge(8).isRunning) {
     if (!isAch118Unlocked) {

@@ -134,7 +134,7 @@ export function gainedInfinityPoints() {
 }
 
 function totalEPMult() {
-  return Pelle.isDisabled("EPMults")
+  const multiplier = Pelle.isDisabled("EPMults")
     ? Pelle.specialGlyphEffect.time.timesEffectOf(PelleRifts.vacuum.milestones[2])
     : getAdjustedGlyphEffect("cursedEP")
       .times(ShopPurchase.EPPurchases.currentMult)
@@ -147,12 +147,15 @@ function totalEPMult() {
         RealityUpgrade(12),
         GlyphEffect.epMult
       );
+  return Decimal.isFinite(multiplier) ? multiplier.clampMax(Decimal.dSafeMax) : DC.D1;
 }
 
 export function gainedEternityPoints() {
   const epExponent = player.records.thisEternity.maxIP.plus(gainedInfinityPoints()).log10().toNumber() /
     (308 - PelleRifts.recursion.effectValue.toNumber()) - 0.7;
+  if (!Number.isFinite(epExponent)) return DC.D0;
   let ep = DC.D5.pow(epExponent).times(totalEPMult());
+  if (!Decimal.isFinite(ep)) return DC.D0;
 
   if (Teresa.isRunning) {
     ep = ep.pow(0.55);
@@ -165,7 +168,8 @@ export function gainedEternityPoints() {
     ep = ep.pow(getSecondaryGlyphEffect("timeEP"));
   }
 
-  return applyBasePrestigePointBoost(ep).pow(Annihilation.eternityPointPower).floor();
+  ep = applyBasePrestigePointBoost(ep).pow(Annihilation.eternityPointPower);
+  return Decimal.isFinite(ep) && ep.gte(0) ? ep.clampMax(Decimal.dSafeMax).floor() : DC.D0;
 }
 
 export function requiredIPForEP(epAmount) {
@@ -301,7 +305,22 @@ export function gainedInfinities() {
   );
   infGain = infGain.times(getAdjustedGlyphEffect("infinityinfmult"));
   infGain = infGain.powEffectOf(SingularityMilestone.infinitiedPow);
-  return infGain.clampMax(Decimal.dSafeMax);
+  return infGain.times(infinitySelfBoost()).clampMax(Decimal.dSafeMax);
+}
+
+export function infinitySelfBoost() {
+  const x = Currency.infinities.value.plus(1).log10();
+  let boostLog;
+  if (x.lte(100)) {
+    boostLog = x.times(0.5);
+  } else if (x.lte(308.25)) {
+    boostLog = new Decimal(50).times(x.div(100).pow(0.616));
+  } else if (x.lte(1000)) {
+    boostLog = new Decimal(100).times(x.div(308.25).pow(0.934));
+  } else {
+    boostLog = new Decimal(300).times(x.div(1000).pow(0.5));
+  }
+  return Decimal.pow10(boostLog).clampMax(Decimal.dSafeMax);
 }
 
 export function updateRefresh() {
@@ -383,12 +402,12 @@ export function getGameSpeedupFactor(effectsToConsider, blackHolesActiveOverride
 
 
   factor *= PelleUpgrade.timeSpeedMult.effectValue.toNumber();
-  factor *= Annihilation.gameSpeedMultiplier * Annihilation.firstMilestoneGameSpeedMultiplier;
+  factor *= Annihilation.gameSpeedMultiplier * Annihilation.firstMilestoneGameSpeedEffect;
   factor *= Achievements.gameSpeedMultiplier;
 
   // 1e-300 is now possible with max inverted BH, going below it would be possible with
   // an effarig glyph.
-  factor = Math.clamp(factor, 1e-300, 1e300);
+  factor = Math.clamp(factor, 1e-300, Number.MAX_VALUE);
 
   return factor;
 }
@@ -598,8 +617,12 @@ export function gameLoop(passDiff, options = {}) {
   // time-played Dimension multiplier, Black Holes, or other altered game-speed effects.
   DestructionDimensions.tick(realDiff);
 
-  const gain = Math.clampMin(FreeTickspeed.fromShards(Currency.timeShards.value).newAmount - player.totalTickGained, 0);
-  player.totalTickGained += gain;
+  const freeTickspeed = FreeTickspeed.fromShards(Currency.timeShards.value);
+  const freeTickGain = freeTickspeed.newAmount - player.totalTickGained;
+  // Never allow an invalid late-game numerical result to corrupt the save's tick counter.
+  if (Number.isFinite(freeTickGain)) {
+    player.totalTickGained += Math.clampMin(freeTickGain, 0);
+  }
 
   updatePrestigeRates();
   tryCompleteInfinityChallenges();
@@ -723,7 +746,8 @@ function passivePrestigeGen() {
   }
 
   if (!EternityChallenge(4).isRunning) {
-    let infGen = DC.D0;
+    const infinityBoost = Pelle.isDisabled("InfinitiedMults") ? DC.D1 : infinitySelfBoost();
+    let infGen = DC.D1.times(Time.deltaTime);
     if (BreakInfinityUpgrade.infinitiedGen.isBought) {
       // Multipliers are done this way to explicitly exclude ach87 and TS32
       infGen = infGen.plus(0.5 * Time.deltaTimeMs / Math.clampMin(50, player.records.bestInfinity.time));
@@ -738,6 +762,7 @@ function passivePrestigeGen() {
     if (RealityUpgrade(11).isBought) {
       infGen = infGen.plus(finitePassiveGain(RealityUpgrade(11).effectValue.times(Time.deltaTime)));
     }
+    infGen = infGen.times(infinityBoost);
     if (EffarigUnlock.eternity.isUnlocked) {
       // We consider half of the eternities we gained above this tick
       // to have been gained before the infinities, and thus not to

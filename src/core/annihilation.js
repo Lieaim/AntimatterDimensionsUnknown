@@ -23,7 +23,7 @@ const INFINITY_COLUMN_UPGRADES = [
 
 const INFINITY_COLUMN_COSTS = [DC.E15];
 const FIRST_ANNIHILATION_ANTIMATTER = new Decimal("9e9e15");
-const NON_DOOMED_ANTIMATTER_CAP = new Decimal("8.99999e9e15");
+const NON_DOOMED_ANTIMATTER_CAP = new Decimal("1e1e25");
 const ANTIMATTER_GAIN_SOFTCAP = new Decimal("9e9e15");
 export const BASE_ANNIHILATION_MATTER_EXPONENT = 0.7;
 
@@ -139,12 +139,35 @@ export const Annihilation = {
 
   get firstMilestoneGameSpeedMultiplier() {
     if (this.power < 1) return 1;
-    return Math.pow(2, this.firstMilestoneGameSpeedPower);
+    return Math.pow(2, Math.min(this.power, 25));
   },
 
   get firstMilestoneGameSpeedPower() {
     if (this.power < 1) return 0;
     return 1 + 0.01 * Math.min(this.power, 25);
+  },
+
+  // The ×2 part compounds once per Annihilation. The exponent is deliberately
+  // linear, so each Annihilation adds exactly ^0.01 instead of multiplying the exponent.
+  get firstMilestoneGameSpeedEffect() {
+    return Math.pow(this.firstMilestoneGameSpeedMultiplier, this.firstMilestoneGameSpeedPower);
+  },
+
+  // Every completed Annihilation reduces V's Reality requirement by 20% of its base value.
+  // It cannot go below one Reality because Reality counts are whole numbers.
+  get vRealityRequirement() {
+    return Math.max(10000 * Math.pow(0.8, this.power), 1);
+  },
+
+  // The third Annihilation is included as the first extra ×1 to Reality rewards.
+  get realityRewardMultiplier() {
+    return Math.min(Math.max(this.power - 1, 1), 25);
+  },
+
+  // The fifth Annihilation improves the four Infinity upgrades whose effects scale with
+  // Infinities. The +0.05 exponent begins at five Annihilations and caps at ^2.5.
+  get infinityUpgradeInfinitiesPower() {
+    return Math.min(1 + 0.05 * Math.max(this.power - 4, 0), 2.5);
   },
 
   get distantGalaxyScalingDelay() {
@@ -201,6 +224,12 @@ export const Annihilation = {
   get tesseractCapIncrease() {
     if (!this.hasAnnihilated) return 0;
     return 3 + Math.floor((this.power - 1) / 5);
+  },
+
+  // Tesseracts normally double the Infinity Dimension purchase cap. Starting with
+  // the second Annihilation, strengthen that per-Tesseract base by 0.025 each time.
+  get tesseractEffectBase() {
+    return 2 + Math.min(0.025 * Math.max(this.power - 1, 0), 1);
   },
 
   // Doomed Reality keeps boosts explicitly earned through Annihilation, but strips the
@@ -330,6 +359,41 @@ export const Annihilation = {
     return this.freeBoostMultiplier(5, 25);
   },
 
+  get singularityMultiplier() {
+    return this.freeBoostMultiplier(2.5, 10);
+  },
+
+  get storedRealTimeMultiplier() {
+    return this.freeBoostMultiplier(2, 5);
+  },
+
+  // This is an earned Annihilation effect, so it remains active in a Doomed Reality.
+  get repeatableDilationUpgradeAutobuyerSpeedMultiplier() {
+    return Math.pow(1.25, Math.max(this.power - 1, 0));
+  },
+
+  get raMemoryMultiplier() {
+    return this.freeBoostMultiplier(2, 5);
+  },
+
+  // Each Annihilation after the first adds +10% Rifts fill. Above +100% this becomes +7.5% per Annihilation,
+  // and above +500% it becomes +5%. The bonus is capped at +900% (1,000% total Rift fill).
+  get pelleRiftFillBonus() {
+    const annihilationsPastFirst = Math.min(Math.max(this.power - 1, 0), 200);
+    let bonus = 0;
+    for (let i = 0; i < annihilationsPastFirst && bonus < 9; i++) {
+      let increase = 0.1;
+      if (bonus >= 5) increase = 0.05;
+      else if (bonus >= 1) increase = 0.075;
+      bonus += increase;
+    }
+    return Math.min(bonus, 9);
+  },
+
+  get pelleRiftFillPercentage() {
+    return 1 + this.pelleRiftFillBonus;
+  },
+
   // This is a distinct Doomed Reality reward, not one of the normal free Annihilation boosts.
   get pelleDilationResourceMultiplier() {
     if (!Pelle.isDoomed) return 1;
@@ -353,6 +417,12 @@ export const Annihilation = {
     return Pelle.isDoomed ? Decimal.dSafeMax : NON_DOOMED_ANTIMATTER_CAP;
   },
 
+  // Doomed Realities have no practical antimatter cap. This is only used to repair
+  // an invalid stored value, so it must stay finite and visible to the player.
+  get invalidAntimatterFallback() {
+    return NON_DOOMED_ANTIMATTER_CAP;
+  },
+
   get antimatterGainSoftcapStart() {
     return ANTIMATTER_GAIN_SOFTCAP;
   },
@@ -365,8 +435,9 @@ export const Annihilation = {
   // x = log10(current AM) / log10(9ee15). This starts smoothly at the threshold
   // and progressively reduces gain farther into the realm's limit.
   softenAntimatterGain(amount, currentAntimatter = Currency.antimatter.value) {
-    const safeAmount = Decimal.isFinite(amount) ? amount : this.antimatterCap;
-    const safeCurrentAntimatter = Decimal.isFinite(currentAntimatter) ? currentAntimatter : this.antimatterCap;
+    const isUsableValue = value => Decimal.isFinite(value) && value.lt(Decimal.dSafeMax);
+    const safeAmount = isUsableValue(amount) ? amount : DC.D0;
+    const safeCurrentAntimatter = isUsableValue(currentAntimatter) ? currentAntimatter : this.invalidAntimatterFallback;
     if (safeAmount.lte(0)) return safeAmount;
     const softcapStart = this.antimatterGainSoftcapStart;
     const uncappedGain = Decimal.max(softcapStart.minus(safeCurrentAntimatter), 0);

@@ -778,6 +778,7 @@ window.player = {
     destructionDimensions: [],
     infinityColumns: Array.repeat(false, 4),
     legacyAutoAchievementsCleared: false,
+    timeDimensionOverflowRecovered: false,
     unlocked: false,
   },
   isGameEnd: false,

@@ -196,16 +196,31 @@ class DecimalCurrency extends Currency {
 }
 window.DecimalCurrency = DecimalCurrency;
 
+// Decimal.dSafeMax is deliberately enormous, but it formats as eInfinite. It is a
+// safety ceiling, not a value that should ever be kept in the player's save.
+function isUsableAntimatterValue(value) {
+  return value instanceof Decimal && Decimal.isFinite(value) && value.gte(0) && value.lt(Decimal.dSafeMax);
+}
+
+function sanitizeTotalAntimatterRecord() {
+  const totalAntimatter = player.records.totalAntimatter;
+  if (!isUsableAntimatterValue(totalAntimatter)) {
+    player.records.totalAntimatter = DC.D0;
+  }
+  return player.records.totalAntimatter;
+}
+
 Currency.antimatter = new class extends DecimalCurrency {
   get value() {
     // A legacy save or an extreme intermediate calculation can contain eInfinite. Keep that
     // invalid value from spreading into production, records, or the Annihilation UI.
-    if (!Decimal.isFinite(player.antimatter)) player.antimatter = Annihilation.antimatterCap;
+    if (!isUsableAntimatterValue(player.antimatter)) player.antimatter = Annihilation.invalidAntimatterFallback;
+    sanitizeTotalAntimatterRecord();
     return player.antimatter;
   }
 
   set value(value) {
-    const safeValue = Decimal.isFinite(value) ? value : Annihilation.antimatterCap;
+    const safeValue = isUsableAntimatterValue(value) ? value : Annihilation.invalidAntimatterFallback;
     const cappedValue = Decimal.min(safeValue, Annihilation.antimatterCap);
     if (InfinityChallenges.nextIC) InfinityChallenges.notifyICUnlock(cappedValue);
     if (GameCache.cheapestAntimatterAutobuyer.value &&
@@ -228,13 +243,21 @@ Currency.antimatter = new class extends DecimalCurrency {
   }
 
   add(amount) {
-    const safeAmount = Decimal.isFinite(amount) ? amount : Annihilation.antimatterCap;
+    // Never turn a bad production calculation into a cap-sized grant. Skipping it is
+    // recoverable; adding a synthetic eInfinite value corrupts the whole save.
+    const safeAmount = isUsableAntimatterValue(amount) ? amount : DC.D0;
     const adjustedAmount = Annihilation.softenAntimatterGain(safeAmount);
+    if (!isUsableAntimatterValue(adjustedAmount)) return;
     super.add(adjustedAmount);
     if (adjustedAmount.gt(0)) {
-      player.records.totalAntimatter = player.records.totalAntimatter.add(adjustedAmount);
+      const totalAntimatter = sanitizeTotalAntimatterRecord().add(adjustedAmount);
+      player.records.totalAntimatter = isUsableAntimatterValue(totalAntimatter) ? totalAntimatter : DC.D0;
       player.requirementChecks.reality.noAM = false;
     }
+  }
+
+  get totalAntimatterRecord() {
+    return sanitizeTotalAntimatterRecord();
   }
 
   get productionPerSecond() {
@@ -335,16 +358,22 @@ Currency.eternities = new class extends DecimalCurrency {
 Currency.eternityPoints = new class extends DecimalCurrency {
   get value() { return player.eternityPoints; }
   set value(value) {
-    player.eternityPoints = value;
-    player.records.thisReality.maxEP = player.records.thisReality.maxEP.max(value);
-    if (player.records.bestReality.bestEP.lt(value)) {
-      player.records.bestReality.bestEP = value;
+    // Never allow an overflowed reward calculation to turn a reset into negative or
+    // invalid EP. This is deliberately at the currency boundary so it also protects
+    // manual resets, passive gain, and autobuyers.
+    const safeValue = Decimal.isFinite(value) && value.gte(0)
+      ? value.clampMax(Decimal.dSafeMax)
+      : DC.D0;
+    player.eternityPoints = safeValue;
+    player.records.thisReality.maxEP = player.records.thisReality.maxEP.max(safeValue);
+    if (player.records.bestReality.bestEP.lt(safeValue)) {
+      player.records.bestReality.bestEP = safeValue;
       player.records.bestReality.bestEPSet = Glyphs.copyForRecords(Glyphs.active.filter(g => g !== null));
     }
 
     if (Pelle.isDoomed) {
       player.celestials.pelle.records.totalEternityPoints =
-        player.celestials.pelle.records.totalEternityPoints.max(value);
+        player.celestials.pelle.records.totalEternityPoints.max(safeValue);
     }
   }
 

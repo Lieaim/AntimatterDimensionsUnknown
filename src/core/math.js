@@ -53,9 +53,15 @@ window.bulkBuyBinarySearch = function bulkBuyBinarySearch(money, costInfo, alrea
   let cantBuy = 1;
   let nextCost;
   do {
+    // Do not let the doubling probe itself become Infinity; values this large cannot be
+    // represented as a purchase count by JavaScript anyway.
+    if (cantBuy >= Number.MAX_VALUE / 2) {
+      nextCost = Decimal.dSafeMax;
+      break;
+    }
     cantBuy *= 2;
     nextCost = costFunction(alreadyBought + cantBuy - 1);
-  } while (money.gte(nextCost));
+  } while (Decimal.isFinite(nextCost) && money.gte(nextCost));
   // Deal with the simple case of buying just one
   if (cantBuy === 2) {
     return { quantity: 1, purchasePrice: firstCost };
@@ -63,11 +69,12 @@ window.bulkBuyBinarySearch = function bulkBuyBinarySearch(money, costInfo, alrea
   // The amount we can actually buy is in the interval [canBuy/2, canBuy), we do a binary search
   // to find the exact value:
   let canBuy = cantBuy / 2;
-  // Very large modded multipliers can afford more purchases than JavaScript can count exactly.
-  // Treat that as an unavailable bulk-buy instead of crashing the game loop/autobuyer.
-  if (cantBuy > Number.MAX_SAFE_INTEGER) return null;
+  // At huge counts JavaScript cannot represent every individual integer. Continue the search using
+  // representable values and stop once the midpoint can no longer move; the result is still a full
+  // bulk purchase instead of silently making every autobuyer stop.
   while (cantBuy - canBuy > 1) {
     const middle = Math.floor((canBuy + cantBuy) / 2);
+    if (middle === canBuy || middle === cantBuy) break;
     if (money.gte(costFunction(alreadyBought + middle - 1))) {
       canBuy = middle;
     } else {
@@ -76,6 +83,12 @@ window.bulkBuyBinarySearch = function bulkBuyBinarySearch(money, costInfo, alrea
   }
   const baseCost = costFunction(alreadyBought + canBuy - 1);
   if (!isCumulative) {
+    return { quantity: canBuy, purchasePrice: baseCost };
+  }
+  // The bulk buyer contract already assumes rapidly increasing costs. Once individual purchases
+  // are beyond JavaScript's exact range, predecessor costs cannot be enumerated meaningfully;
+  // the last cost is the stable, conservative payment approximation.
+  if (canBuy > Number.MAX_SAFE_INTEGER) {
     return { quantity: canBuy, purchasePrice: baseCost };
   }
   let otherCost = DC.D0;

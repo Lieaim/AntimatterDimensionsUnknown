@@ -56,16 +56,20 @@ export default {
         this.resetAvailable = canReset;
         this.statusText = "";
 
-        if (!isDoomed) this.resetText = "You need to doom your reality to annihilate";
-        else if (!canReset) this.resetText = "Reach 9ee15 Antimatter to Annihilate";
-        else {
-          let reward = "Annihilation Matter";
-          try {
-            reward = `${safeFormat(Annihilation.matterGain)} Annihilation Matter`;
-          } catch {
-            // A display-only reward failure must never make the page unusable.
+        if (isDoomed) {
+          if (canReset) {
+            let reward = "Annihilation Matter";
+            try {
+              reward = `${safeFormat(Annihilation.matterGain)} Annihilation Matter`;
+            } catch {
+              // A display-only reward failure must never make the page unusable.
+            }
+            this.resetText = `Annihilate and begin again\nGain ${reward} and 1 Annihilation Perk`;
+          } else {
+            this.resetText = "Reach 9ee15 Antimatter to Annihilate";
           }
-          this.resetText = `Annihilate and begin again\nGain ${reward} and 1 Annihilation Perk`;
+        } else {
+          this.resetText = "You need to doom your reality to annihilate";
         }
 
         this.dimensionButtons = DIMENSION_COSTS.map((cost, index) => {
@@ -123,6 +127,9 @@ export default {
     replayQuotes() {
       Quotes.annihilation.first.present();
     },
+    showBoosts() {
+      Modal.annihilationBoosts.show();
+    },
   },
 };
 </script>
@@ -130,11 +137,35 @@ export default {
 <template>
   <div class="l-annihilation-tab">
     <h2>Annihilation Matter</h2>
-    <button class="c-annihilation-quotes" @click="replayQuotes">Annihilation Quotes</button>
-    <button class="c-annihilation-reset" :disabled="!resetAvailable" @click="annihilate">{{ resetText }}</button>
-    <div class="c-annihilation-tab__amount">{{ matterText }}</div>
+    <button
+      class="c-annihilation-quotes"
+      @click="replayQuotes"
+    >
+      Annihilation Quotes
+    </button>
+    <button
+      class="c-annihilation-reset"
+      :disabled="!resetAvailable"
+      @click="annihilate"
+    >
+      {{ resetText }}
+    </button>
+    <button
+      class="c-annihilation-boosts"
+      @click="showBoosts"
+    >
+      Annihilation boosts
+    </button>
+    <div class="c-annihilation-tab__amount">
+      {{ matterText }}
+    </div>
     <p>Spend Matter to annihilate Dimensions and permanently strengthen Antimatter production.</p>
-    <p v-if="statusText" class="c-annihilation-tab__status">{{ statusText }}</p>
+    <p
+      v-if="statusText"
+      class="c-annihilation-tab__status"
+    >
+      {{ statusText }}
+    </p>
     <div class="l-annihilation-dimensions">
       <button
         v-for="dimension in dimensionButtons"
@@ -162,17 +193,25 @@ export default {
 .l-annihilation-tab { text-align: center; color: #aaa; }
 .c-annihilation-tab__amount { margin-top: 1rem; font-size: 3rem; font-weight: bold; }
 .c-annihilation-tab__status { color: #d38b55; }
-.c-annihilation-quotes, .c-annihilation-upgrade, .c-annihilation-reset {
+.c-annihilation-quotes, .c-annihilation-upgrade, .c-annihilation-reset, .c-annihilation-boosts {
   color: #aaa; background: #111; border: 0.15rem solid #888; border-radius: var(--var-border-radius, 0.5rem);
   font-family: Typewriter, serif; white-space: pre-line; cursor: pointer;
 }
 .c-annihilation-quotes { display: block; margin: 1rem auto; padding: 0.6rem 1.2rem; }
 .c-annihilation-reset { min-width: 42rem; min-height: 6rem; padding: 0.75rem 1.5rem; font-size: 1.5rem; }
+.c-annihilation-boosts { display: block; margin: 0.8rem auto; padding: 0.6rem 1.2rem; }
 .c-annihilation-upgrade { min-height: 5rem; padding: 0.5rem; }
 .c-annihilation-upgrade--infinity { min-width: 26rem; margin-bottom: 2rem; }
 .c-annihilation-upgrade:disabled, .c-annihilation-reset:disabled { opacity: 0.5; cursor: default; }
-.c-annihilation-quotes:hover, .c-annihilation-upgrade:not(:disabled):hover,
+.c-annihilation-quotes:hover, .c-annihilation-boosts:hover,
+.c-annihilation-upgrade:not(:disabled):hover,
 .c-annihilation-reset:not(:disabled):hover { color: #111; background: #888; }
 .c-annihilation-upgrade--bought { color: #111; background: #888; opacity: 1; }
-.l-annihilation-dimensions { display: grid; grid-template-columns: repeat(2, minmax(20rem, 1fr)); gap: 1rem; max-width: 52rem; margin: 2rem auto; }
+.l-annihilation-dimensions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(20rem, 1fr));
+  gap: 1rem;
+  max-width: 52rem;
+  margin: 2rem auto;
+}
 </style>

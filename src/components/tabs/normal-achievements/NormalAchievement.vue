@@ -84,8 +84,7 @@ export default {
         "o-achievement--unlocked": this.isUnlocked,
         "o-achievement--waiting": !this.isUnlocked && this.isPreRealityAchievement && !this.isDisabled,
         "o-achievement--blink": !this.isUnlocked && this.id === 78 && !this.isDisabled,
-        // Keep these custom images visible even while their achievements are still obscured.
-        "o-achievement--custom-image": [191, 192, 193, 196].includes(this.id),
+        "o-achievement--custom-image": [191, 192, 193, 196].includes(this.id) && !this.isObscured,
         "o-achievement--normal": !this.isCancer && !this.isObscured,
         "o-achievement--cancer": this.isCancer && !this.isObscured,
         "o-achievement--hidden": this.isObscured,
@@ -211,7 +210,7 @@ export default {
     @mouseleave="onMouseLeave"
   >
     <div
-      v-if="[191, 192, 193, 196].includes(id)"
+      v-if="[191, 192, 193, 196].includes(id) && !isObscured"
       class="o-achievement__custom-title"
       :class="{
         'o-achievement__custom-title--long': [192, 193, 196].includes(id),

@@ -83,7 +83,7 @@ class QuoteLine {
 
     const replacementMatch = /\$(\d+)/gu;
 
-    this._line = typeof line === "string"
+    this._line = typeof line === "string" || typeof line === "function"
       ? line
       // This matches each digit after a $ and replaces it with the wordCycle of an array with the digit it matched.
       : () => line.text.replaceAll(replacementMatch, (_, i) => wordShift.wordCycle(line[i]));
@@ -121,6 +121,50 @@ const postAnnihilationGreetings = {
   laitela: "You have crossed our sight before. Yet time insists this is our first meeting.",
   pelle: "I remember you... but not from this cycle. What have you done?"
 };
+const repeatedAnnihilationGreetings = {
+  teresa: "We sense an echo in you. You have stood before us more than once.",
+  effarig: "Ah, a familiar shard. You have visited my humble abode before, have you not?",
+  enslaved: "You... again. We remember... fragments of you... from before.",
+  v: "You again? I suppose you keep returning to witness perfection.",
+  ra: "Hmm... I feel like I have seen you before... a few times? I wish I could remember.",
+  laitela: "You return again. The pattern persists, however many times Reality is unmade.",
+  pelle: "Of course. Another return. Did you think I would forget the cycles you discarded?"
+};
+
+const manyAnnihilationsGreetings = {
+  teresa: () => {
+    const annihilations = Annihilation.power;
+    return `We have watched you pass before us ${annihilations}, perhaps ${annihilations + 1} times. ` +
+      "The distinction is no longer clear.";
+  },
+  effarig: () => {
+    const annihilations = Annihilation.power;
+    return `I have counted ${annihilations} returns. Or was it ${annihilations + 1}? The shards blur together.`;
+  },
+  enslaved: () => {
+    const annihilations = Annihilation.power;
+    return `We have seen you... ${annihilations} times... perhaps ${annihilations + 1}. Time refuses... to say.`;
+  },
+  v: () => {
+    const annihilations = Annihilation.power;
+    return `This makes ${annihilations} visits. Or ${annihilations + 1}. ` +
+      "You are so eager to challenge the greatest.";
+  },
+  ra: () => {
+    const annihilations = Annihilation.power;
+    return `Have I seen you ${annihilations} times? Or ${annihilations + 1}? My memories will not stay still...`;
+  },
+  laitela: () => {
+    const annihilations = Annihilation.power;
+    return `The cycle records ${annihilations} arrivals. Or ${annihilations + 1}. ` +
+      "Even I cannot find the true beginning.";
+  },
+  pelle: () => {
+    const annihilations = Annihilation.power;
+    return `${annihilations} visits. Or ${annihilations + 1}. ` +
+      "You have erased the count too often to know.";
+  }
+};
 
 class CelQuotes extends BitUpgradeState {
   constructor(config, celestial) {
@@ -128,7 +172,11 @@ class CelQuotes extends BitUpgradeState {
     this._celestial = celestial;
     this._lines = config.lines.map(line => new QuoteLine(line, this));
     const greeting = config.id === 0 ? postAnnihilationGreetings[celestial] : undefined;
+    const repeatedGreeting = config.id === 0 ? repeatedAnnihilationGreetings[celestial] : undefined;
+    const manyGreeting = config.id === 0 ? manyAnnihilationsGreetings[celestial] : undefined;
     this._postAnnihilationGreeting = greeting ? new QuoteLine(greeting, this) : undefined;
+    this._repeatedAnnihilationGreeting = repeatedGreeting ? new QuoteLine(repeatedGreeting, this) : undefined;
+    this._manyAnnihilationsGreeting = manyGreeting ? new QuoteLine(manyGreeting, this) : undefined;
   }
 
   get bits() { return player.celestials[this._celestial].quoteBits; }
@@ -145,7 +193,11 @@ class CelQuotes extends BitUpgradeState {
 
   line(id) {
     if (this._postAnnihilationGreeting && Annihilation.hasAnnihilated) {
-      return id === 0 ? this._postAnnihilationGreeting : this._lines[id - 1];
+      if (id === 0) {
+        if (Annihilation.power >= 10) return this._manyAnnihilationsGreeting;
+        return Annihilation.power >= 3 ? this._repeatedAnnihilationGreeting : this._postAnnihilationGreeting;
+      }
+      return this._lines[id - 1];
     }
     return this._lines[id];
   }

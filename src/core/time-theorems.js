@@ -34,7 +34,7 @@ export class TimeTheoremPurchaseType {
   get costIncrement() { throw new NotImplementedError(); }
 
   get bulkPossible() {
-    if (Perk.ttFree.canBeApplied) {
+    if (Perk.ttFree.canBeApplied || this.currency === Currency.eternityPoints) {
       return Math.floor(this.currency.value.divide(this.cost).log10().toNumber() / this.costIncrement.log10().toNumber() + 1);
     }
     return Decimal.affordGeometricSeries(this.currency.value, this.cost, this.costIncrement, 0).toNumber();
@@ -50,7 +50,9 @@ export class TimeTheoremPurchaseType {
     if (!this.canAfford) return false;
     let purchased = false;
     const amount = this.bulkPossible;
-    const buyFn = cost => (Perk.ttFree.canBeApplied ? this.currency.gte(cost) : this.currency.purchase(cost));
+    // EP-bought Time Theorems, like other Eternity upgrades, retain EP after purchase.
+    const isFree = this.currency === Currency.eternityPoints || Perk.ttFree.canBeApplied;
+    const buyFn = cost => (isFree ? this.currency.gte(cost) : this.currency.purchase(cost));
     // This will sometimes buy one too few for EP, so we just have to buy 1 after.
     if (bulk && buyFn(this.bulkCost(amount))) {
       Currency.timeTheorems.add(amount);

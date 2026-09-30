@@ -92,7 +92,9 @@ export default {
   methods: {
     update() {
       const records = player.records;
-      this.totalAntimatter.copyFrom(records.totalAntimatter);
+      // Read through Currency so old saves containing the former eInfinite safety
+      // ceiling are repaired before Statistics tries to display them.
+      this.totalAntimatter.copyFrom(Currency.antimatter.totalAntimatterRecord);
       this.realTimePlayed.setFrom(records.realTimePlayed);
       this.fullTimePlayed = TimeSpan.fromMilliseconds(records.previousRunRealTime + records.realTimePlayed);
       this.uniqueNews = NewsHandler.uniqueTickersSeen;

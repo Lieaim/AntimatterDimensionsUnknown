@@ -220,7 +220,21 @@ export const FreeTickspeed = {
     const tickmult = (1 + (Effects.min(1.33, TimeStudy(171)) - 1) *
       Math.max(getAdjustedGlyphEffect("cursedtickspeed"), 1));
     const logTickmult = Math.log(tickmult);
-    const logShards = shards.ln().toNumber();
+    // The post-softcap solver uses ordinary JavaScript numbers. Extremely large Decimal values can
+    // have a logarithm beyond Number.MAX_VALUE, which would otherwise turn Newton's method into
+    // Infinity - Infinity and ultimately produce a NaN tick count.
+    const rawLogShards = shards.ln().toNumber();
+    // An unrepresentably large Time Shard value is corrupted data, not a valid reason to award
+    // an enormous number of free tickspeed upgrades. Leave the current amount unchanged until
+    // the Time Dimension recovery path repairs the source value.
+    if (!Number.isFinite(rawLogShards)) {
+      this.multToNext = tickmult;
+      return {
+        newAmount: this.amount,
+        nextShards: Decimal.dSafeMax
+      };
+    }
+    const logShards = rawLogShards;
     // Destruction Power improves the Time Shard free-tickspeed formula, rather than ordinary tickspeed upgrades.
     const uncapped = Math.max(0, logShards / logTickmult) * DestructionDimensions.powerEffect;
     if (uncapped <= FreeTickspeed.softcap) {
@@ -259,7 +273,8 @@ export const FreeTickspeed = {
       oldApproximation = approximation;
       approximation = newtonsMethod(approximation);
     } while (approximation < oldApproximation && ++counter < 100);
-    const purchases = Math.floor(approximation);
+    // Keep this number finite even if an unusual modifier makes the numerical approximation unstable.
+    const purchases = Number.isFinite(approximation) ? Math.floor(Math.max(approximation, 0)) : 0;
     // This undoes the function we're implicitly applying to costs (the "+ 1") is because we want
     // the cost of the next upgrade.
     const next = Decimal.exp(priceToCap + boughtToCost(purchases + 1) * logTickmult);

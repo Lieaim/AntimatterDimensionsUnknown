@@ -1,10 +1,12 @@
 import { DC } from "../../constants";
 
 function dimInfinityMult() {
-  return Currency.infinitiesTotal.value.times(0.2).plus(1);
+  return Currency.infinitiesTotal.value.times(0.2).plus(1).pow(Annihilation.infinityUpgradeInfinitiesPower);
 }
 function chargedDimInfinityMult() {
-  return 1 + Math.log10(Math.max(1, Currency.infinitiesTotal.value.pLog10().toNumber())) * Math.sqrt(Ra.pets.teresa.level) / 150;
+  const multiplier = 1 + Math.log10(Math.max(1, Currency.infinitiesTotal.value.pLog10().toNumber())) *
+    Math.sqrt(Ra.pets.teresa.level) / 150;
+  return Math.pow(multiplier, Annihilation.infinityUpgradeInfinitiesPower);
 }
 
 export const infinityUpgrades = {

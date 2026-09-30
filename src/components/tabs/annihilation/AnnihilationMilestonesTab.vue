@@ -1,5 +1,5 @@
 <script>
-const MILESTONE_REQUIREMENTS = Array.range(1, 15);
+const MILESTONE_REQUIREMENTS = [1, 2, 3, ...Array.range(5, 11)];
 
 export default {
   name: "AnnihilationMilestonesTab",
@@ -23,7 +23,7 @@ export default {
     },
     effectFor(requirement) {
       if (requirement === 1) {
-        const description = "2x game speed and ^1.01 game speed compounding per annihilation " +
+        const description = "2x game speed compounds per Annihilation; game speed gains +^0.01 per Annihilation " +
           "(caps at 25 annihilations)";
         const multiplier = this.formatAnnihilation(Annihilation.firstMilestoneGameSpeedMultiplier, 2, 2);
         const power = this.formatAnnihilation(Annihilation.firstMilestoneGameSpeedPower, 2, 2);
@@ -35,6 +35,17 @@ export default {
           "(caps at ^1.5)";
         return `${description}\nCurrently: ^${this.formatAnnihilation(Annihilation.prestigePointMilestonePower, 2, 2)}`;
       }
+      if (requirement === 3) {
+        const description = "Reality rewards gain +×1 per Annihilation starting at 3 " +
+          "(caps at ×25)";
+        return `${description}\nCurrently: ×${formatInt(Annihilation.realityRewardMultiplier)}`;
+      }
+      if (requirement === 5) {
+        const description = "Infinity upgrades which boost Antimatter Dimensions based on Infinities gain " +
+          "+^0.05 per Annihilation starting at 5 (caps at ^2.5)";
+        const current = this.formatAnnihilation(Annihilation.infinityUpgradeInfinitiesPower, 2, 2);
+        return `${description}\nCurrently: ^${current}`;
+      }
       return "Placeholder milestone effect";
     },
   },
@@ -44,7 +55,7 @@ export default {
 <template>
   <div class="l-annihilation-milestone-grid">
     <div>You have {{ quantifyInt("Annihilation", annihilations) }}.</div>
-    <div>Milestone effects are placeholders for now and will be added as Annihilation expands.</div>
+    <div>More milestones will be added as Annihilation expands.</div>
     <div
       v-for="row in rows"
       :key="row"
@@ -105,7 +116,7 @@ export default {
   border: 0.1rem solid #888;
   border-radius: var(--var-border-radius, 0.4rem);
   font-family: Typewriter, serif;
-  font-size: 1.2rem;
+  font-size: 1rem;
   white-space: pre-line;
   transition-duration: 0.2s;
 }

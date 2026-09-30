@@ -95,10 +95,11 @@ export function getDimensionFinalMultiplierUncached(tier) {
     multiplier = multiplier.pow(1.05);
   }
 
-  return multiplier.pow(antimatterDimensionBasePower())
+  const finalMultiplier = multiplier.pow(antimatterDimensionBasePower())
     .pow(Annihilation.antimatterDimensionPowerForTier(tier))
     .pow(Annihilation.infinityAntimatterPower)
     .times(Annihilation.dimensionPlaytimeMultiplier);
+  return Decimal.isFinite(finalMultiplier) ? finalMultiplier.clampMax(Decimal.dSafeMax) : DC.D1;
 }
 
 function applyNDMultipliers(mult, tier) {
@@ -149,9 +150,9 @@ function applyNDMultipliers(mult, tier) {
     multiplier = multiplier.times(1 + tier / 100);
   }
 
-  multiplier = multiplier.clampMin(1);
+  multiplier = Decimal.isFinite(multiplier) ? multiplier.clampMin(1).clampMax(Decimal.dSafeMax) : DC.D1;
 
-  return multiplier;
+  return Decimal.isFinite(multiplier) ? multiplier.clampMax(Decimal.dSafeMax) : DC.D1;
 }
 
 function applyNDPowers(mult, tier) {

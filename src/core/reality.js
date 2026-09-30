@@ -299,7 +299,7 @@ function updateRealityRecords(realityProps) {
 }
 
 function giveRealityRewards(realityProps) {
-  const multiplier = realityProps.simulatedRealities + 1;
+  const multiplier = (realityProps.simulatedRealities + 1) * Annihilation.realityRewardMultiplier;
   const realityAndPPMultiplier = multiplier + binomialDistribution(multiplier, Achievement(154).effectOrDefault(0));
   const gainedRM = Currency.realityMachines.gte(MachineHandler.hardcapRM) ? DC.D0 : realityProps.gainedRM;
   Currency.realityMachines.add(gainedRM.times(multiplier));

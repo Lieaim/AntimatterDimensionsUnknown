@@ -108,7 +108,17 @@ export const imaginaryUpgrades = [
     checkRequirement: () => player.celestials.effarig.relicShards >= 1e90,
     checkEvent: GAME_EVENT.REALITY_RESET_AFTER,
     description: "Time Dimension power based on total antimatter",
-    effect: () => 1 + Math.log10(player.records.totalAntimatter.log10().toNumber()) / 100,
+    effect: () => {
+      const totalAntimatter = player.records.totalAntimatter;
+      if (!Decimal.isFinite(totalAntimatter)) {
+        player.records.totalAntimatter = DC.D0;
+        return 1;
+      }
+      const logTotalAntimatter = totalAntimatter.log10().toNumber();
+      if (!Number.isFinite(logTotalAntimatter) || logTotalAntimatter <= 0) return 1;
+      const effect = 1 + Math.log10(logTotalAntimatter) / 100;
+      return Number.isFinite(effect) ? effect : 1;
+    },
     formatEffect: value => `${formatPow(value, 0, 4)}`,
     isDisabledInDoomed: true
   },

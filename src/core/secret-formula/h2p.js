@@ -1453,7 +1453,7 @@ without buying 8th Antimatter Dimensions in your current Infinity.
 <br>
 <br>
 After the subtab is unlocked from the Achievement, you are met with another set of requirements to fully unlock V.
-You must have completed ${formatInt(GameDatabase.celestials.v.mainUnlock.realities.requirement)} Realities and have
+You must have completed ${formatInt(GameDatabase.celestials.v.mainUnlock.realities.requirement())} Realities and have
 ${format(GameDatabase.celestials.v.mainUnlock.realityMachines.requirement)} unspent RM.
 Additionally you need to reach ${format(GameDatabase.celestials.v.mainUnlock.eternities.requirement)} Eternities,
 ${format(GameDatabase.celestials.v.mainUnlock.infinities.requirement)} Infinities,
